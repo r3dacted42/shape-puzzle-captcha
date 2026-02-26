@@ -1,7 +1,8 @@
 import { LitElement, css, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import * as THREE from "three";
-import { BufferGeometryUtils } from "three/examples/jsm/Addons.js";
+import { customElement, property } from "lit/decorators.js";
+import SceneManager from "./engine/SceneManager";
+import Interaction from "./engine/Interaction";
+
 import reloadSvg from "./assets/reload.svg?raw";
 import infoSvg from "./assets/info.svg?raw";
 import audioSvg from "./assets/audio.svg?raw";
@@ -11,124 +12,57 @@ export class ShapePuzzleCaptcha extends LitElement {
   @property({ type: Number, attribute: "shape-color" })
   public shapeColor: number = 0xa83232;
 
-  private animationFrameId: number | null = null;
+  @property({ type: Number, attribute: "selected-shape-color" })
+  public selectedShapeColor: number = 0xc27502;
 
-  @state()
-  private shapes = [
-    {
-      type: "cube",
-      geometry: new THREE.BoxGeometry(50, 50, 50),
-      position: { x: -120, y: 0, z: -150 },
-      rotation: { x: 0, y: Math.PI / 6, z: 0 },
-    },
-    {
-      type: "cylinder",
-      geometry: new THREE.CylinderGeometry(25, 25, 50, 32),
-      position: { x: -120, y: 0, z: 0 },
-      rotation: { x: 0, y: Math.PI / -3, z: Math.PI / 2 },
-    },
-    {
-      type: "half-cylinder",
-      geometry: BufferGeometryUtils.mergeGeometries([
-        new THREE.CylinderGeometry(25, 25, 60, 32, 1, false, 0, Math.PI),
-        new THREE.PlaneGeometry(60, 60).rotateY(Math.PI / -2),
-      ]),
-      position: { x: 0, y: 0, z: -140 },
-      rotation: { x: 0, y: Math.PI / 6, z: Math.PI / 2 },
-    },
-    {
-      type: "triangular prism",
-      geometry: new THREE.ExtrudeGeometry(
-        new THREE.Shape([
-          new THREE.Vector2(0, 0),
-          new THREE.Vector2(50, 0),
-          new THREE.Vector2(25, 50),
-        ]),
-        { depth: 50, bevelEnabled: false },
-      ).translate(-25, -25, -25),
-      position: { x: 0, y: 0, z: -5 },
-      rotation: { x: 0, y: Math.PI / 6, z: 0 },
-    },
-    {
-      type: "small cuboid",
-      geometry: new THREE.BoxGeometry(30, 30, 60),
-      position: { x: 120, y: 0, z: -150 },
-      rotation: { x: 0, y: Math.PI / 6, z: 0 },
-    },
-    {
-      type: "big cuboid",
-      geometry: new THREE.BoxGeometry(50, 50, 80),
-      position: { x: 120, y: 0, z: 0 },
-      rotation: { x: 0, y: Math.PI / -3, z: 0 },
-    },
-  ];
+  private sceneManager: SceneManager | undefined;
+  private interaction: Interaction | undefined;
+
+  constructor() {
+    super();
+    // add theme change listener
+  }
 
   protected firstUpdated(): void {
-    const scene = new THREE.Scene();
     const canvas = this.shadowRoot?.getElementById(
       "canvas",
     ) as HTMLCanvasElement;
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
-    const camera = new THREE.OrthographicCamera(
-      canvas.width / -2,
-      canvas.width / 2,
-      canvas.height / 2,
-      canvas.height / -2,
-      0.1,
-      2000,
+    this.sceneManager = new SceneManager(
+      canvas,
+      this.shapeColor,
+      this.selectedShapeColor,
     );
-    camera.position.set(0, 500, 500);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas });
-    const bgColorRGBString = getComputedStyle(canvas).backgroundColor;
-    renderer.setClearColor(new THREE.Color(bgColorRGBString));
-    renderer.setSize(canvas.width, canvas.height);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 5);
-    directionalLight1.position.set(-50, 100, 50);
-    scene.add(directionalLight1);
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 3);
-    directionalLight2.position.set(50, 100, -50);
-    scene.add(directionalLight2);
-    // scene.add(new THREE.DirectionalLightHelper(directionalLight, 5));
-
-    // const basePlane = new THREE.Mesh(
-    //   new THREE.PlaneGeometry(500, 500),
-    //   new THREE.MeshStandardMaterial({ color: 0xeeeeee }),
-    // );
-    // basePlane.rotation.x = -Math.PI / 2;
-    // basePlane.position.y = -25;
-    // scene.add(basePlane);
-
-    this.shapes.forEach((shape) => {
-      const material = new THREE.MeshStandardMaterial({
-        color: this.shapeColor,
-      });
-      const mesh = new THREE.Mesh(shape.geometry, material);
-      mesh.position.set(shape.position.x, shape.position.y, shape.position.z);
-      mesh.rotation.set(shape.rotation.x, shape.rotation.y, shape.rotation.z);
-      scene.add(mesh);
-    });
-
-    const animate = () => {
-      renderer.render(scene, camera);
-      this.animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animate();
+    this.interaction = new Interaction(canvas, this.sceneManager);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
+    this.sceneManager?.dispose();
+    this.interaction?.dispose();
   }
+
+  private onReset = () => {
+    this.sceneManager?.onReset();
+    this.dispatchEvent(
+      new CustomEvent("shapepuzzlecaptchareset", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
+  private onVerify = () => {
+    if (this.sceneManager?.isSolved) {
+      this.dispatchEvent(
+        new CustomEvent("shapepuzzlecaptchasolved", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+  };
 
   render() {
     return html`
@@ -144,6 +78,7 @@ export class ShapePuzzleCaptcha extends LitElement {
           class="icon-btn"
           id="refresh-btn"
           .innerHTML="${reloadSvg}"
+          .onclick="${this.onReset}"
         ></button>
         <button
           class="icon-btn"
@@ -152,7 +87,9 @@ export class ShapePuzzleCaptcha extends LitElement {
         ></button>
         <button class="icon-btn" id="info-btn" .innerHTML="${infoSvg}"></button>
         <div class="spacer"></div>
-        <button class="text-btn" id="submit-btn">Verify</button>
+        <button class="text-btn" id="submit-btn" .onclick="${this.onVerify}">
+          Verify
+        </button>
       </footer>
     `;
   }
@@ -208,6 +145,7 @@ export class ShapePuzzleCaptcha extends LitElement {
       height: 360px;
       margin: 0px 8px 8px 8px;
       background-color: var(--canvas-bg-color);
+      touch-action: none;
     }
 
     footer {

@@ -7,9 +7,36 @@
     <title>shape-puzzle-captcha</title>
     <link rel="stylesheet" href="./src/index.css" />
     <script type="module" src="/src/shape-puzzle-captcha.ts"></script>
+    <style>
+      body {
+        font-family: monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: white;
+          background-color: black;
+        }
+      }
+    </style>
   </head>
-  <body style="display: flex; gap: 8px;">
+  <body>
     <shape-puzzle-captcha></shape-puzzle-captcha>
-    <shape-puzzle-captcha class="dark"></shape-puzzle-captcha>
+    <p>solved: <span id="solved">false</span></p>
+    <script>
+      const captchaElem = document.getElementsByTagName(
+        "shape-puzzle-captcha",
+      )[0];
+      const solvedElem = document.getElementById("solved");
+
+      if (matchMedia("(prefers-color-scheme: dark)").matches)
+        captchaElem.classList.add("dark");
+
+      captchaElem.addEventListener("shapepuzzlecaptchareset", () => {
+        solvedElem.innerText = "false";
+      });
+      captchaElem.addEventListener("shapepuzzlecaptchasolved", () => {
+        solvedElem.innerText = "true";
+      });
+    </script>
   </body>
 </html>
