@@ -1,13 +1,26 @@
 {
-  "name": "shape-puzzle-captcha",
+  "name": "@r3dacted42/shape-puzzle-captcha",
   "description": "Web component for a shape puzzle based captcha. Drag and drop shapes into the correct holes to pass!",
   "license": "MIT",
   "author": "r3dacted42",
   "version": "0.0.1",
   "type": "module",
+  "main": "dist/shape-puzzle-captcha.umd.cjs",
+  "module": "dist/shape-puzzle-captcha.js",
+  "types": "dist/shape-puzzle-captcha.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/shape-puzzle-captcha.js",
+      "require": "./dist/shape-puzzle-captcha.umd.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,6 +31,7 @@
   "devDependencies": {
     "@types/three": "^0.183.0",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-dts": "^4.5.4"
   }
 }
