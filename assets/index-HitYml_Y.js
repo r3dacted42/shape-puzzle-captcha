@@ -4084,6 +4084,7 @@ void main() {
       border: 1px solid var(--border-color);
       border-radius: 3px;
       font-family: var(--font-family), sans-serif;
+      user-select: none;
 
       --font-family: "Arial";
       --bg-color: #fff;
