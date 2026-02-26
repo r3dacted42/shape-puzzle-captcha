@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>shape-puzzle-captcha</title>
+    <style>
+      body {
+        font-family: monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: white;
+          background-color: black;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-BVfX8vu8.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-tn0RQdqM.css">
+  </head>
+  <body>
+    <shape-puzzle-captcha></shape-puzzle-captcha>
+    <p>solved: <span id="solved">false</span></p>
+    <script>
+      const captchaElem = document.getElementsByTagName(
+        "shape-puzzle-captcha",
+      )[0];
+      const solvedElem = document.getElementById("solved");
+
+      if (matchMedia("(prefers-color-scheme: dark)").matches)
+        captchaElem.classList.add("dark");
+
+      captchaElem.addEventListener("shapepuzzlecaptchareset", () => {
+        solvedElem.innerText = "false";
+      });
+      captchaElem.addEventListener("shapepuzzlecaptchasolved", () => {
+        solvedElem.innerText = "true";
+      });
+    </script>
+  </body>
+</html>
