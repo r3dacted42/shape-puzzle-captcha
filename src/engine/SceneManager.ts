@@ -2,14 +2,13 @@ import * as THREE from "three";
 import { shuffleArray } from "../utils";
 import { positions, shapesData, zOffset, zSpacing } from "../shapesData";
 import { ADDITION, Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
+import Animator from "./Animator";
 
 type ShapeData = {
   mesh: THREE.Mesh;
   solved: boolean;
   initPos: THREE.Vector3;
-  targetPos: THREE.Vector3;
-  initRot: THREE.Quaternion;
-  targetRot: THREE.Quaternion;
+  initRot: THREE.Euler;
 };
 
 export default class SceneManager {
@@ -21,12 +20,11 @@ export default class SceneManager {
   private animationFrameId: number = -1;
   private frameRate: number = 60;
   private lastFrameTimestamp: number = 0;
-  private shapeSpeed: number = 0.75;
   private shapeYOffset: number = 55;
+  private animator = new Animator();
 
   private camera: THREE.OrthographicCamera;
   private cameraInitPos: THREE.Vector3;
-  private cameraTargetPos: THREE.Vector3;
   private scene: THREE.Scene;
   private raycaster: THREE.Raycaster;
 
@@ -70,7 +68,6 @@ export default class SceneManager {
       1000,
     );
     this.cameraInitPos = new THREE.Vector3(0, 400, 500);
-    this.cameraTargetPos = new THREE.Vector3().copy(this.cameraInitPos);
     this.camera.position.copy(this.cameraInitPos);
     this.camera.lookAt(0, 0, 0);
     this.camera.updateProjectionMatrix();
@@ -97,7 +94,7 @@ export default class SceneManager {
     this.scene.add(directionalLight2);
 
     this.basePlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, 1500),
+      new THREE.PlaneGeometry(width, height * 2),
       new THREE.MeshStandardMaterial(),
     );
     this.basePlane.visible = false;
@@ -126,39 +123,11 @@ export default class SceneManager {
       return;
     }
     this.lastFrameTimestamp = timestamp;
-
-    const t = Math.min((this.shapeSpeed * dt) / 100, 1.0);
-    const animatePos = (object: THREE.Object3D, targetPos: THREE.Vector3) => {
-      if (object.position.distanceTo(targetPos) < 0.1) {
-        object.position.copy(targetPos);
-        return true;
-      }
-      object.position.lerp(targetPos, t);
-      return false;
-    };
-
-    for (const [_, { mesh, solved, targetPos, targetRot }] of this.shapeMap) {
-      const done = animatePos(mesh, targetPos);
-      if (done && solved) {
-        mesh.visible = false;
-        continue;
-      }
-      const targetQuat = new THREE.Quaternion();
-      targetQuat.setFromEuler(mesh.rotation);
-      mesh.rotation.setFromQuaternion(targetQuat.slerp(targetRot, t));
-      const targetOpactiy = solved ? 0 : 1;
-      const material = mesh.material as THREE.Material;
-      material.opacity = THREE.MathUtils.lerp(
-        material.opacity,
-        targetOpactiy,
-        t,
-      );
+    this.animator.update(dt);
+    for (const shapeData of this.shapeMap.values()) {
+      if (shapeData.solved && !this.animator.isAnimationActive(shapeData.mesh))
+        shapeData.mesh.visible = false;
     }
-    animatePos(this.camera, this.cameraTargetPos);
-    if (this.isShapeSelected)
-      animatePos(this.basePlane, new THREE.Vector3(0, this.shapeYOffset, 0));
-    else animatePos(this.basePlane, new THREE.Vector3());
-
     this.renderer.render(this.scene, this.camera);
     this.animationFrameId = requestAnimationFrame(this.animate);
   };
@@ -181,7 +150,9 @@ export default class SceneManager {
 
   public onReset = () => {
     this.selectedShape = "";
-    this.cameraTargetPos.copy(this.cameraInitPos);
+    this.animator.animate(this.camera, {
+      position: this.cameraInitPos,
+    });
     this.initShapes();
   };
 
@@ -189,9 +160,6 @@ export default class SceneManager {
     const randomPositions = shuffleArray(positions);
     for (let i = 0; i < shapesData.length; i++) {
       const shapeInitData = shapesData[i];
-      const x = randomPositions[i].x + shapeInitData.offset.x,
-        y = randomPositions[i].y + shapeInitData.offset.y,
-        z = randomPositions[i].z + shapeInitData.offset.z;
       let shape = this.shapeMap.get(shapeInitData.type);
       if (!shape) {
         const material = new THREE.MeshStandardMaterial({
@@ -199,42 +167,35 @@ export default class SceneManager {
           transparent: true,
         });
         const mesh = new THREE.Mesh(shapeInitData.geometry, material);
-        mesh.position.set(x, y, z);
+        mesh.position.copy(randomPositions[i].add(shapeInitData.offset));
         mesh.name = shapeInitData.type;
+        mesh.rotation.copy(shapeInitData.rotation);
         shape = {
           mesh,
           solved: false,
-          initPos: new THREE.Vector3(x, y, z),
-          targetPos: new THREE.Vector3(x, y, z),
-          initRot: new THREE.Quaternion(),
-          targetRot: new THREE.Quaternion(),
+          initPos: mesh.position.clone(),
+          initRot: mesh.rotation.clone(),
         };
         this.shapeMap.set(mesh.name, shape);
         this.scene.add(mesh);
       } else {
         shape.solved = false;
         shape.mesh.visible = true;
-        (shape.mesh.material as THREE.Material).opacity = 1;
-        shape.initPos.set(x, y, z);
-        shape.targetPos.set(x, y, z);
+        shape.initPos.copy(randomPositions[i].add(shapeInitData.offset));
+        this.animator.animate(shape.mesh, {
+          opacity: 1,
+          color: this.shapeColor,
+          position: shape.initPos,
+          rotation: shape.initRot,
+        });
       }
-      shape.mesh.rotation.set(
-        shapeInitData.rotation.x,
-        shapeInitData.rotation.y,
-        shapeInitData.rotation.z,
-      );
-      shape.initRot.setFromEuler(shape.mesh.rotation);
-      shape.targetRot.setFromEuler(shape.mesh.rotation);
     }
 
     if (this.holeBox) return;
     const randomShapes = shuffleArray(shapesData.filter((h) => h.hole.render));
+    const baseWidth = this.canvas.clientWidth - 25;
     const baseBrush = new Brush(
-      new THREE.BoxGeometry(this.canvas.clientWidth - 25, 80, 80).translate(
-        0,
-        -15,
-        0,
-      ),
+      new THREE.BoxGeometry(baseWidth, 80, 80).translate(0, -15, 0),
       new THREE.MeshStandardMaterial({ color: 0xeeeeee }),
     );
     const baseZPos = zOffset - 1.25 * zSpacing;
@@ -263,7 +224,7 @@ export default class SceneManager {
       const holePos = new THREE.Vector3(posX, 15, baseZPos);
       brush.position.copy(holePos);
       this.holePosMap.set(randomShapes[i].type, holePos);
-      brush.rotation.set(hole.rotation.x, hole.rotation.y, hole.rotation.z);
+      brush.rotation.copy(hole.rotation);
       brush.updateMatrixWorld();
       holeBrush = csgEvaluator.evaluate(holeBrush, brush, ADDITION);
     }
@@ -280,21 +241,33 @@ export default class SceneManager {
     const shape = this.shapeMap.get(objName);
     if (!shape) return;
     this.selectedShape = objName;
-    shape.targetPos.setY(this.shapeYOffset);
+    this.animator.animate(shape.mesh, {
+      position: shape.initPos.clone().setY(this.shapeYOffset),
+      color: this.selectedShapeColor,
+    });
     this.selectionXZOffset = { x: offsetX, z: offsetZ };
-    (shape.mesh.material as THREE.MeshStandardMaterial).color = new THREE.Color(
-      this.selectedShapeColor,
-    );
-    this.cameraTargetPos.setY(this.cameraInitPos.y + this.shapeYOffset);
+    this.animator.animate(this.camera, {
+      position: this.camera.position
+        .clone()
+        .setY(this.cameraInitPos.y + this.shapeYOffset),
+    });
+    this.animator.animate(this.basePlane, {
+      position: new THREE.Vector3(0, this.shapeYOffset, 0),
+    });
   };
 
   public setSelectedShapeXZ = (hitPos: THREE.Vector3, isOnBox: boolean) => {
     const shape = this.shapeMap.get(this.selectedShape);
     if (!shape) return;
     if (!isOnBox) {
-      shape.targetPos.setX(hitPos.x + this.selectionXZOffset.x);
-      shape.targetPos.setZ(hitPos.z + this.selectionXZOffset.z);
-      shape.targetRot.copy(shape.initRot);
+      this.animator.animate(shape.mesh, {
+        position: new THREE.Vector3(
+          hitPos.x + this.selectionXZOffset.x,
+          this.shapeYOffset,
+          hitPos.z + this.selectionXZOffset.z,
+        ),
+        rotation: shape.initRot,
+      });
       this.selectedHole = "";
     } else {
       let closestHole: [string, THREE.Vector3] | undefined;
@@ -310,40 +283,50 @@ export default class SceneManager {
       if (!closestHole || !shapeData) return;
       const [holeType, holePos] = closestHole;
       this.selectedHole = holeType;
-      shape.targetPos.setX(holePos.x + shapeData.hole.shapeOffset?.x);
-      shape.targetPos.setY(this.shapeYOffset + shapeData.hole.shapeOffset?.y);
-      shape.targetPos.setZ(holePos.z + shapeData.hole.shapeOffset?.z);
-      shape.targetRot.setFromEuler(
-        new THREE.Euler(
-          shapeData.hole.rotation.x,
-          shapeData.hole.rotation.y,
-          shapeData.hole.rotation.z,
+      this.animator.animate(shape.mesh, {
+        position: new THREE.Vector3(
+          holePos.x + shapeData.hole.shapeOffset?.x,
+          this.shapeYOffset + shapeData.hole.shapeOffset?.y,
+          holePos.z + this.selectionXZOffset.z,
         ),
-      );
+        rotation: shapeData.hole.rotation,
+      });
     }
   };
 
   public clearSelectedShape = () => {
-    const shape = this.shapeMap.get(this.selectedShape);
-    if (!shape) return;
-    (shape.mesh.material as THREE.MeshStandardMaterial).color = new THREE.Color(
-      this.shapeColor,
-    );
-    this.cameraTargetPos.copy(this.cameraInitPos);
-    const compatibleHoles = shapesData.find(
-      (d) => d.type === this.selectedShape,
-    )?.compatibleHoles;
-    if (compatibleHoles && compatibleHoles.includes(this.selectedHole)) {
-      shape.targetPos.copy(
-        this.holePosMap.get(this.selectedHole)!.clone().setY(-35),
-      );
-      shape.solved = true;
-    } else {
-      shape.targetPos.copy(shape.initPos);
-      shape.targetRot.copy(shape.initRot);
-    }
+    this.animator.animate(this.camera, {
+      position: this.cameraInitPos,
+    });
+    this.animator.animate(this.basePlane, {
+      position: new THREE.Vector3(),
+    });
+    const holeType = this.selectedHole,
+      shapeType = this.selectedShape;
     this.selectedHole = "";
     this.selectedShape = "";
+    const shape = this.shapeMap.get(shapeType);
+    if (!shape) return;
+    const compatibleHoles = shapesData.find(
+      (d) => d.type === shapeType,
+    )?.compatibleHoles;
+    const solved = compatibleHoles?.includes(holeType) ?? false;
+    if (solved) {
+      // animate fading into hole
+      this.animator.animate(shape.mesh, {
+        opacity: 0,
+        color: this.shapeColor,
+        position: this.holePosMap.get(holeType)!.clone().setY(-35),
+      });
+      shape.solved = true;
+    } else {
+      // reset shape
+      this.animator.animate(shape.mesh, {
+        color: this.shapeColor,
+        position: shape.initPos,
+        rotation: shape.initRot,
+      });
+    }
   };
 
   public dispose = () => {

@@ -108,7 +108,7 @@ export class ShapePuzzleCaptcha extends LitElement {
 
       --font-family: "Arial";
       --bg-color: #fff;
-      --canvas-bg-color: #f0f0f0;
+      --canvas-bg-color: #f5f5f5;
       --text-color: #000;
       --primary-color: #1a73e9;
       --on-primary-color: #fff;
