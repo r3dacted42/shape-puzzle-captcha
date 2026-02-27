@@ -59,11 +59,13 @@ export default class SceneManager {
     this.shapeColor = _shapeColor;
     this.selectedShapeColor = _selectedShapeColor;
 
+    const width = this.canvas.clientWidth,
+      height = this.canvas.clientHeight;
     this.camera = new THREE.OrthographicCamera(
-      this.canvas.width / -2,
-      this.canvas.width / 2,
-      this.canvas.height / 2,
-      this.canvas.height / -2,
+      width / -2,
+      width / 2,
+      height / 2,
+      height / -2,
       0.1,
       1000,
     );
@@ -77,25 +79,25 @@ export default class SceneManager {
       antialias: true,
       canvas: this.canvas,
     });
-    // this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(this.canvas.width, this.canvas.height);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setSize(width, height, false);
     const bgColorRGBString = getComputedStyle(this.canvas).backgroundColor;
     this.renderer.setClearColor(new THREE.Color(bgColorRGBString));
 
     this.scene = new THREE.Scene();
     this.raycaster = new THREE.Raycaster();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     this.scene.add(ambientLight);
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 5);
-    directionalLight1.position.set(-50, 100, 50);
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 3);
+    directionalLight1.position.set(-100, 100, 50);
     this.scene.add(directionalLight1);
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 3);
-    directionalLight2.position.set(50, 100, -50);
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight2.position.set(0, 100, 0);
     this.scene.add(directionalLight2);
 
     this.basePlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.canvas.width, 1500),
+      new THREE.PlaneGeometry(width, 1500),
       new THREE.MeshStandardMaterial(),
     );
     this.basePlane.visible = false;
@@ -117,7 +119,7 @@ export default class SceneManager {
       .filter((i) => !this.shapeMap.get(i.object.name)?.solved);
   };
 
-  private animate = (timestamp: number = 0): void => {
+  private animate = (timestamp: number = 0) => {
     const dt = timestamp - this.lastFrameTimestamp; // ms
     if (dt < 1000 / this.frameRate) {
       this.animationFrameId = requestAnimationFrame(this.animate);
@@ -161,12 +163,14 @@ export default class SceneManager {
     this.animationFrameId = requestAnimationFrame(this.animate);
   };
 
-  public onThemeChange = (): void => {
+  public onThemeChange = () => {
     const bgColorRGBString = getComputedStyle(this.canvas).backgroundColor;
     this.renderer.setClearColor(new THREE.Color(bgColorRGBString));
   };
 
-  public onResize = (width: number, height: number): void => {
+  public onResize = () => {
+    const width = this.canvas.clientWidth;
+    const height = this.canvas.clientHeight;
     this.camera.left = width / -2;
     this.camera.right = width / 2;
     this.camera.top = height / 2;
@@ -175,13 +179,13 @@ export default class SceneManager {
     this.renderer.setSize(width, height, false);
   };
 
-  public onReset = (): void => {
+  public onReset = () => {
     this.selectedShape = "";
     this.cameraTargetPos.copy(this.cameraInitPos);
     this.initShapes();
   };
 
-  public initShapes = (): void => {
+  public initShapes = () => {
     const randomPositions = shuffleArray(positions);
     for (let i = 0; i < shapesData.length; i++) {
       const shapeInitData = shapesData[i];
@@ -226,7 +230,7 @@ export default class SceneManager {
     if (this.holeBox) return;
     const randomShapes = shuffleArray(shapesData.filter((h) => h.hole.render));
     const baseBrush = new Brush(
-      new THREE.BoxGeometry(this.canvas.width - 25, 80, 80).translate(
+      new THREE.BoxGeometry(this.canvas.clientWidth - 25, 80, 80).translate(
         0,
         -15,
         0,
@@ -237,7 +241,15 @@ export default class SceneManager {
     baseBrush.position.set(0, 0, baseZPos);
     baseBrush.updateMatrixWorld();
     const csgEvaluator = new Evaluator();
-    let holeBrush: Brush | undefined;
+    const baseHollowScale = 0.7;
+    let holeBrush = new Brush(
+      baseBrush.geometry
+        .clone()
+        .scale(baseHollowScale, baseHollowScale, baseHollowScale),
+      new THREE.MeshStandardMaterial({ color: 0x333333 }),
+    );
+    holeBrush.position.copy(baseBrush.position);
+    holeBrush.updateMatrixWorld();
     const holeScale = 1.1;
     for (let i = 0; i < randomShapes.length; i++) {
       const hole = randomShapes[i].hole;
@@ -247,15 +259,13 @@ export default class SceneManager {
         new THREE.MeshStandardMaterial({ color: 0x333333 }),
       );
       const posX =
-        (this.canvas.width - 100) * (i / (randomShapes.length - 1) - 0.5);
+        (this.canvas.clientWidth - 100) * (i / (randomShapes.length - 1) - 0.5);
       const holePos = new THREE.Vector3(posX, 15, baseZPos);
       brush.position.copy(holePos);
       this.holePosMap.set(randomShapes[i].type, holePos);
       brush.rotation.set(hole.rotation.x, hole.rotation.y, hole.rotation.z);
       brush.updateMatrixWorld();
-      if (holeBrush)
-        holeBrush = csgEvaluator.evaluate(holeBrush, brush, ADDITION);
-      else holeBrush = brush;
+      holeBrush = csgEvaluator.evaluate(holeBrush, brush, ADDITION);
     }
     this.holeBox = csgEvaluator.evaluate(baseBrush, holeBrush!, SUBTRACTION);
     this.holeBox.name = "holeBox";
@@ -336,7 +346,7 @@ export default class SceneManager {
     this.selectedShape = "";
   };
 
-  public dispose = (): void => {
+  public dispose = () => {
     if (this.animationFrameId !== -1)
       cancelAnimationFrame(this.animationFrameId);
     this.scene?.traverse((obj) => {
