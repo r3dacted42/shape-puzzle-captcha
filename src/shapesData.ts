@@ -24,7 +24,6 @@ export const shapesData = [
     compatibleHoles: ["cube"],
     hole: {
       render: true,
-      shapeOffset: new THREE.Vector3(),
       rotation: new THREE.Euler(),
     },
   },
@@ -60,7 +59,6 @@ export const shapesData = [
     compatibleHoles: ["cylinder", "cube"],
     hole: {
       render: true,
-      shapeOffset: new THREE.Vector3(),
       rotation: new THREE.Euler(),
     },
   },
@@ -94,7 +92,6 @@ export const shapesData = [
     compatibleHoles: ["triangular prism", "cube"],
     hole: {
       render: true,
-      shapeOffset: new THREE.Vector3(),
       rotation: new THREE.Euler(Math.PI / 2, 0, Math.PI),
     },
   },

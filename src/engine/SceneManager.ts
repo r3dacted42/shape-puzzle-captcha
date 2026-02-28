@@ -279,15 +279,15 @@ export default class SceneManager {
         )
           closestHole = hole;
       }
-      const shapeData = shapesData.find((h) => h.type === this.selectedShape);
+      const shapeData = shapesData.find((d) => d.type === this.selectedShape);
       if (!closestHole || !shapeData) return;
       const [holeType, holePos] = closestHole;
       this.selectedHole = holeType;
       this.animator.animate(shape.mesh, {
         position: new THREE.Vector3(
-          holePos.x + shapeData.hole.shapeOffset?.x,
-          this.shapeYOffset + shapeData.hole.shapeOffset?.y,
-          holePos.z + this.selectionXZOffset.z,
+          holePos.x + (shapeData.hole.shapeOffset?.x ?? 0),
+          this.shapeYOffset + (shapeData.hole.shapeOffset?.y ?? 0),
+          holePos.z + (shapeData.hole.shapeOffset?.z ?? 0),
         ),
         rotation: shapeData.hole.rotation,
       });
