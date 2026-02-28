@@ -1,3 +1,4 @@
+import type { ShapeType } from "../shapesData";
 import type SceneManager from "./SceneManager";
 
 export default class Interaction {
@@ -34,7 +35,7 @@ export default class Interaction {
     for (const interection of intersections)
       if (interection.object.name !== "basePlane") {
         this.sceneManager.setSelectedShape(
-          interection.object.name,
+          interection.object.name as ShapeType,
           interection.object.position.x - basePoint.x,
           interection.object.position.z - basePoint.z,
         );

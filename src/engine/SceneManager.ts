@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { shuffleArray } from "../utils";
-import { positions, shapesData, zOffset, zSpacing } from "../shapesData";
+import {
+  positions,
+  shapesData,
+  zOffset,
+  zSpacing,
+  type HoleType,
+  type ShapeType,
+} from "../shapesData";
 import { ADDITION, Brush, Evaluator, SUBTRACTION } from "three-bvh-csg";
 import Animator from "./Animator";
 
@@ -31,15 +38,14 @@ export default class SceneManager {
   private basePlane: THREE.Mesh;
 
   private holeBox: THREE.Mesh | undefined;
-  private holePosMap = new Map<string, THREE.Vector3>();
-
-  private shapeMap = new Map<string, ShapeData>();
-  private selectedShape: string = "";
+  private holePosMap = new Map<HoleType, THREE.Vector3>();
+  private shapeMap = new Map<ShapeType, ShapeData>();
+  private selectedShape: ShapeType | undefined;
   private selectionXZOffset = { x: 0, z: 0 };
-  private selectedHole: string = "";
+  private selectedHole: HoleType | undefined;
 
   public get isShapeSelected() {
-    return this.selectedShape != "";
+    return !!this.selectedShape;
   }
   public get isSolved() {
     return [...this.shapeMap.values()].reduce(
@@ -113,7 +119,7 @@ export default class SceneManager {
     );
     return this.raycaster
       .intersectObjects(this.scene.children, true)
-      .filter((i) => !this.shapeMap.get(i.object.name)?.solved);
+      .filter((i) => !this.shapeMap.get(i.object.name as ShapeType)?.solved);
   };
 
   private animate = (timestamp: number = 0) => {
@@ -149,7 +155,8 @@ export default class SceneManager {
   };
 
   public onReset = () => {
-    this.selectedShape = "";
+    this.selectedShape = undefined;
+    this.selectedHole = undefined;
     this.animator.animate(this.camera, {
       position: this.cameraInitPos,
     });
@@ -160,28 +167,27 @@ export default class SceneManager {
     const randomPositions = shuffleArray(positions);
     for (let i = 0; i < shapesData.length; i++) {
       const shapeInitData = shapesData[i];
-      let shape = this.shapeMap.get(shapeInitData.type);
+      const shape = this.shapeMap.get(shapeInitData.type);
       if (!shape) {
         const material = new THREE.MeshStandardMaterial({
           color: this.shapeColor,
           transparent: true,
         });
         const mesh = new THREE.Mesh(shapeInitData.geometry, material);
-        mesh.position.copy(randomPositions[i].add(shapeInitData.offset));
+        mesh.position.copy(randomPositions[i]);
         mesh.name = shapeInitData.type;
         mesh.rotation.copy(shapeInitData.rotation);
-        shape = {
+        this.shapeMap.set(shapeInitData.type, {
           mesh,
           solved: false,
           initPos: mesh.position.clone(),
           initRot: mesh.rotation.clone(),
-        };
-        this.shapeMap.set(mesh.name, shape);
+        });
         this.scene.add(mesh);
       } else {
         shape.solved = false;
         shape.mesh.visible = true;
-        shape.initPos.copy(randomPositions[i].add(shapeInitData.offset));
+        shape.initPos.copy(randomPositions[i]);
         this.animator.animate(shape.mesh, {
           opacity: 1,
           color: this.shapeColor,
@@ -192,7 +198,7 @@ export default class SceneManager {
     }
 
     if (this.holeBox) return;
-    const randomShapes = shuffleArray(shapesData.filter((h) => h.hole.render));
+    const randomShapes = shuffleArray(shapesData.filter((h) => !!h.hole));
     const baseWidth = this.canvas.clientWidth - 25;
     const baseBrush = new Brush(
       new THREE.BoxGeometry(baseWidth, 80, 80).translate(0, -15, 0),
@@ -211,30 +217,32 @@ export default class SceneManager {
     );
     holeBrush.position.copy(baseBrush.position);
     holeBrush.updateMatrixWorld();
+
     const holeScale = 1.1;
+    const holyOffsetY = 15;
     for (let i = 0; i < randomShapes.length; i++) {
-      const hole = randomShapes[i].hole;
-      if (!hole.render) continue;
+      const shapeData = randomShapes[i];
+      if (!shapeData.hole) continue;
+      const shapeGeometry = randomShapes[i].geometry;
       const brush = new Brush(
-        randomShapes[i].geometry.clone().scale(holeScale, holeScale, holeScale),
+        shapeGeometry.clone().scale(holeScale, holeScale, holeScale),
         new THREE.MeshStandardMaterial({ color: 0x333333 }),
       );
-      const posX =
-        (this.canvas.clientWidth - 100) * (i / (randomShapes.length - 1) - 0.5);
-      const holePos = new THREE.Vector3(posX, 15, baseZPos);
-      brush.position.copy(holePos);
-      this.holePosMap.set(randomShapes[i].type, holePos);
-      brush.rotation.copy(hole.rotation);
+      const posX = (baseWidth - 100) * (i / (randomShapes.length - 1) - 0.5);
+      brush.position.set(posX, holyOffsetY, baseZPos);
+      this.holePosMap.set(shapeData.hole.type, brush.position);
+      if (shapeData.hole.rotation) brush.rotation.copy(shapeData.hole.rotation);
       brush.updateMatrixWorld();
       holeBrush = csgEvaluator.evaluate(holeBrush, brush, ADDITION);
     }
+
     this.holeBox = csgEvaluator.evaluate(baseBrush, holeBrush!, SUBTRACTION);
     this.holeBox.name = "holeBox";
     this.scene.add(this.holeBox);
   };
 
   public setSelectedShape = (
-    objName: string,
+    objName: ShapeType,
     offsetX: number,
     offsetZ: number,
   ) => {
@@ -257,9 +265,11 @@ export default class SceneManager {
   };
 
   public setSelectedShapeXZ = (hitPos: THREE.Vector3, isOnBox: boolean) => {
+    if (!this.selectedShape) return;
     const shape = this.shapeMap.get(this.selectedShape);
     if (!shape) return;
     if (!isOnBox) {
+      this.selectedHole = undefined;
       this.animator.animate(shape.mesh, {
         position: new THREE.Vector3(
           hitPos.x + this.selectionXZOffset.x,
@@ -268,28 +278,29 @@ export default class SceneManager {
         ),
         rotation: shape.initRot,
       });
-      this.selectedHole = "";
     } else {
-      let closestHole: [string, THREE.Vector3] | undefined;
+      const shapeData = shapesData.find((d) => d.type === this.selectedShape);
+      let closestHole: [HoleType, THREE.Vector3] | undefined;
       for (const hole of this.holePosMap) {
-        if (
-          !closestHole ||
-          closestHole[1].distanceToSquared(hitPos) >
-            hole[1].distanceToSquared(hitPos)
-        )
+        const dist = hole[1].distanceToSquared(hitPos);
+        if (!closestHole || dist < closestHole[1].distanceToSquared(hitPos))
           closestHole = hole;
       }
-      const shapeData = shapesData.find((d) => d.type === this.selectedShape);
       if (!closestHole || !shapeData) return;
       const [holeType, holePos] = closestHole;
       this.selectedHole = holeType;
+
+      const holeAlignment =
+        shapeData.holeAlignment?.find(
+          (a) => a.holeType !== "any" && a.holeType.includes(holeType),
+        ) ?? shapeData.holeAlignment?.find((a) => a.holeType === "any");
       this.animator.animate(shape.mesh, {
         position: new THREE.Vector3(
-          holePos.x + (shapeData.hole.shapeOffset?.x ?? 0),
-          this.shapeYOffset + (shapeData.hole.shapeOffset?.y ?? 0),
-          holePos.z + (shapeData.hole.shapeOffset?.z ?? 0),
+          holePos.x + (holeAlignment?.offset?.x ?? 0),
+          this.shapeYOffset + (holeAlignment?.offset?.y ?? 0),
+          holePos.z + (holeAlignment?.offset?.z ?? 0),
         ),
-        rotation: shapeData.hole.rotation,
+        rotation: holeAlignment?.rotation ?? new THREE.Euler(),
       });
     }
   };
@@ -301,22 +312,29 @@ export default class SceneManager {
     this.animator.animate(this.basePlane, {
       position: new THREE.Vector3(),
     });
-    const holeType = this.selectedHole,
-      shapeType = this.selectedShape;
-    this.selectedHole = "";
-    this.selectedShape = "";
-    const shape = this.shapeMap.get(shapeType);
-    if (!shape) return;
-    const compatibleHoles = shapesData.find(
-      (d) => d.type === shapeType,
-    )?.compatibleHoles;
-    const solved = compatibleHoles?.includes(holeType) ?? false;
+
+    if (!this.selectedShape) return;
+    const shape = this.shapeMap.get(this.selectedShape);
+    if (!shape) {
+      this.selectedShape = undefined;
+      this.selectedHole = undefined;
+      return;
+    }
+    const shapeData = shapesData.find((d) => d.type === this.selectedShape);
+    const solved = this.selectedHole
+      ? shapeData?.compatibleHoles.includes(this.selectedHole) || false
+      : false;
+    console.log(
+      `shape ${this.selectedShape} is ${
+        solved ? "solved" : "not solved"
+      } (hole: ${this.selectedHole})`,
+    );
     if (solved) {
       // animate fading into hole
       this.animator.animate(shape.mesh, {
         opacity: 0,
         color: this.shapeColor,
-        position: this.holePosMap.get(holeType)!.clone().setY(-35),
+        position: this.holePosMap.get(this.selectedHole!)!.clone().setY(-35),
       });
       shape.solved = true;
     } else {
@@ -327,6 +345,8 @@ export default class SceneManager {
         rotation: shape.initRot,
       });
     }
+    this.selectedHole = undefined;
+    this.selectedShape = undefined;
   };
 
   public dispose = () => {
@@ -339,5 +359,6 @@ export default class SceneManager {
       }
     });
     this.renderer?.dispose();
+    this.animator.clearAnimations();
   };
 }

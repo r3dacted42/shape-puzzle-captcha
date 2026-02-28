@@ -15,52 +15,82 @@ export const positions = [
   new THREE.Vector3(xOffset + xSpacing, 0, zOffset),
 ];
 
+export type ShapeType =
+  | "cube"
+  | "small cuboid"
+  | "big cuboid"
+  | "cylinder"
+  | "half-cylinder"
+  | "prism";
+export type HoleType = "square" | "rect" | "circle" | "semicircle" | "triangle";
+export interface ShapeData {
+  type: ShapeType;
+  geometry: THREE.BufferGeometry;
+  rotation: THREE.Euler;
+  hole?: {
+    type: HoleType;
+    offset?: THREE.Vector3;
+    rotation?: THREE.Euler;
+  };
+  compatibleHoles: HoleType[];
+  holeAlignment?: {
+    holeType: "any" | HoleType[];
+    offset?: THREE.Vector3;
+    rotation?: THREE.Euler;
+  }[];
+}
+
 export const shapesData = [
   {
     type: "cube",
     geometry: new THREE.BoxGeometry(50, 50, 50),
-    offset: new THREE.Vector3(),
     rotation: new THREE.Euler(0, Math.PI / 6, 0),
-    compatibleHoles: ["cube"],
     hole: {
-      render: true,
-      rotation: new THREE.Euler(),
+      type: "square",
     },
+    compatibleHoles: ["square"],
   },
   {
     type: "small cuboid",
     geometry: new THREE.BoxGeometry(30, 30, 50),
-    offset: new THREE.Vector3(),
     rotation: new THREE.Euler(0, Math.PI / 6, 0),
-    compatibleHoles: ["small cuboid", "cube"],
     hole: {
-      render: true,
-      shapeOffset: new THREE.Vector3(0, -10, 0),
-      rotation: new THREE.Euler(),
+      type: "rect",
     },
+    compatibleHoles: ["rect", "square", "circle"],
+    holeAlignment: [
+      {
+        holeType: "any",
+        offset: new THREE.Vector3(0, -10, 0),
+      },
+      {
+        holeType: ["circle"],
+        offset: new THREE.Vector3(0, 0, 0),
+        rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+      },
+    ],
   },
   {
     type: "big cuboid",
     geometry: new THREE.BoxGeometry(50, 50, 80),
-    offset: new THREE.Vector3(),
     rotation: new THREE.Euler(0, Math.PI / -3, 0),
-    compatibleHoles: ["cube"],
-    hole: {
-      render: false,
-      shapeOffset: new THREE.Vector3(0, 15, 0),
-      rotation: new THREE.Euler(Math.PI / 2, 0, 0),
-    },
+    compatibleHoles: ["square"],
+    holeAlignment: [
+      {
+        holeType: "any",
+        offset: new THREE.Vector3(0, 15, 0),
+        rotation: new THREE.Euler(Math.PI / 2, 0, 0),
+      },
+    ],
   },
   {
     type: "cylinder",
     geometry: new THREE.CylinderGeometry(25, 25, 50, 32),
-    offset: new THREE.Vector3(),
     rotation: new THREE.Euler(0, Math.PI / -3, Math.PI / 2),
-    compatibleHoles: ["cylinder", "cube"],
     hole: {
-      render: true,
-      rotation: new THREE.Euler(),
+      type: "circle",
     },
+    compatibleHoles: ["circle", "square"],
   },
   {
     type: "half-cylinder",
@@ -68,17 +98,22 @@ export const shapesData = [
       new THREE.CylinderGeometry(25, 25, 60, 32, 1, false, 0, Math.PI),
       new THREE.PlaneGeometry(50, 60).rotateY(Math.PI / -2),
     ]).translate(-25 / 2, 0, 0),
-    offset: new THREE.Vector3(),
     rotation: new THREE.Euler(0, Math.PI / 6, Math.PI / 2),
-    compatibleHoles: ["half-cylinder", "cube", "cylinder"],
     hole: {
-      render: true,
-      shapeOffset: new THREE.Vector3(0, 5, 0),
+      type: "semicircle",
       rotation: new THREE.Euler(0, Math.PI / 2, 0),
     },
+    compatibleHoles: ["semicircle", "square", "circle"],
+    holeAlignment: [
+      {
+        holeType: "any",
+        offset: new THREE.Vector3(0, 5, 0),
+        rotation: new THREE.Euler(0, Math.PI / 2, 0),
+      },
+    ],
   },
   {
-    type: "triangular prism",
+    type: "prism",
     geometry: new THREE.ExtrudeGeometry(
       new THREE.Shape([
         new THREE.Vector2(0, 0),
@@ -87,12 +122,17 @@ export const shapesData = [
       ]),
       { depth: 50, bevelEnabled: false },
     ).translate(-25, -25, -25),
-    offset: new THREE.Vector3(0, 0, -5),
     rotation: new THREE.Euler(0, Math.PI / 6, 0),
-    compatibleHoles: ["triangular prism", "cube"],
     hole: {
-      render: true,
-      rotation: new THREE.Euler(Math.PI / 2, 0, Math.PI),
+      type: "triangle",
+      rotation: new THREE.Euler(-Math.PI / 2, 0, 0),
     },
+    compatibleHoles: ["triangle", "square"],
+    holeAlignment: [
+      {
+        holeType: "any",
+        rotation: new THREE.Euler(Math.PI / 2, 0, Math.PI),
+      },
+    ],
   },
-];
+] as ShapeData[];

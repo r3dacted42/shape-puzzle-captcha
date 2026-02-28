@@ -60,6 +60,8 @@ export default class Animator {
         if (Math.abs(material.opacity - targetOpacity) > 0.01) {
           changed = true;
           material.opacity = targetOpacity;
+        } else {
+          material.opacity = opacity;
         }
       }
       if (position) {
