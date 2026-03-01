@@ -2,6 +2,7 @@ import type { ShapeType } from "../shapesData";
 import type SceneManager from "./SceneManager";
 
 export default class Interaction {
+  public enabled = true;
   private canvas: HTMLCanvasElement;
   private sceneManager: SceneManager;
 
@@ -44,6 +45,7 @@ export default class Interaction {
   };
 
   private onPointerMove = (ev: PointerEvent): void => {
+    if (!this.enabled) return;
     const rect = this.canvas.getBoundingClientRect();
     const x = ev.clientX - rect.left,
       y = ev.clientY - rect.top;
