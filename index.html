@@ -20,22 +20,18 @@
     </style>
   </head>
   <body>
-    <shape-puzzle-captcha></shape-puzzle-captcha>
-    <p>solved: <span id="solved">false</span></p>
+    <shape-puzzle-captcha auto-dark="data"></shape-puzzle-captcha>
+    <p>solved: <span id="is-solved">false</span></p>
     <script>
       const captchaElem = document.getElementsByTagName(
         "shape-puzzle-captcha",
       )[0];
-      const solvedElem = document.getElementById("solved");
-
-      if (matchMedia("(prefers-color-scheme: dark)").matches)
-        captchaElem.classList.add("dark");
-
+      const isSolvedElem = document.getElementById("is-solved");
       captchaElem.addEventListener("shapepuzzlecaptchareset", () => {
-        solvedElem.innerText = "false";
+        isSolvedElem.innerText = "false";
       });
       captchaElem.addEventListener("shapepuzzlecaptchasolved", () => {
-        solvedElem.innerText = "true";
+        isSolvedElem.innerText = "true";
       });
     </script>
   </body>

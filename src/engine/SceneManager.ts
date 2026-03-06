@@ -199,7 +199,7 @@ export default class SceneManager {
 
     if (this.holeBox) return;
     const randomShapes = shuffleArray(shapesData.filter((h) => !!h.hole));
-    const baseWidth = this.canvas.clientWidth - 25;
+    const baseWidth = Math.max(this.canvas.clientWidth, 384) - 25;
     const baseBrush = new Brush(
       new THREE.BoxGeometry(baseWidth, 80, 80).translate(0, -15, 0),
       new THREE.MeshStandardMaterial({ color: 0xeeeeee }),
@@ -219,7 +219,7 @@ export default class SceneManager {
     holeBrush.updateMatrixWorld();
 
     const holeScale = 1.1;
-    const holyOffsetY = 15;
+    const holeOffsetY = 15;
     for (let i = 0; i < randomShapes.length; i++) {
       const shapeData = randomShapes[i];
       if (!shapeData.hole) continue;
@@ -229,7 +229,7 @@ export default class SceneManager {
         new THREE.MeshStandardMaterial({ color: 0x333333 }),
       );
       const posX = (baseWidth - 100) * (i / (randomShapes.length - 1) - 0.5);
-      brush.position.set(posX, holyOffsetY, baseZPos);
+      brush.position.set(posX, holeOffsetY, baseZPos);
       this.holePosMap.set(shapeData.hole.type, brush.position);
       if (shapeData.hole.rotation) brush.rotation.copy(shapeData.hole.rotation);
       brush.updateMatrixWorld();
@@ -324,11 +324,11 @@ export default class SceneManager {
     const solved = this.selectedHole
       ? shapeData?.compatibleHoles.includes(this.selectedHole) || false
       : false;
-    console.log(
-      `shape ${this.selectedShape} is ${
-        solved ? "solved" : "not solved"
-      } (hole: ${this.selectedHole})`,
-    );
+    // console.log(
+    //   `shape ${this.selectedShape} is ${
+    //     solved ? "solved" : "not solved"
+    //   } (hole: ${this.selectedHole})`,
+    // );
     if (solved) {
       // animate fading into hole
       this.animator.animate(shape.mesh, {

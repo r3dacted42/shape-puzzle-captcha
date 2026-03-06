@@ -9,8 +9,8 @@ import audioSvg from "./assets/audio.svg?raw";
 
 @customElement("shape-puzzle-captcha")
 export class ShapePuzzleCaptcha extends LitElement {
-  @property({ type: Boolean, attribute: "auto-dark", reflect: true })
-  public autoDark: boolean = false;
+  @property({ type: String, attribute: "auto-dark", reflect: true })
+  public autoDark: boolean | string = false;
 
   @property({ type: Number, attribute: "shape-color" })
   public shapeColor: number = 0xa83232;
@@ -21,11 +21,40 @@ export class ShapePuzzleCaptcha extends LitElement {
   private sceneManager: SceneManager | undefined;
   private interaction: Interaction | undefined;
   private infoOverlay: HTMLDivElement | undefined;
+  private themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  private resizeObserver = new ResizeObserver(() => {
+    const canvas = this.shadowRoot?.getElementById(
+      "shape-puzzle-canvas",
+    ) as HTMLCanvasElement;
+    if (canvas) {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      this.sceneManager?.onResize();
+    }
+  });
 
-  constructor() {
-    super();
-    // add theme change listener
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.onThemeChange(this.themeMediaQuery);
+    this.themeMediaQuery.addEventListener("change", this.onThemeChange);
   }
+
+  private onThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+    if (e.matches) {
+      if (this.autoDark === "data") {
+        this.setAttribute("data-dark", "");
+      } else {
+        this.classList.add("dark");
+      }
+    } else {
+      if (this.autoDark === "data") {
+        this.removeAttribute("data-dark");
+      } else {
+        this.classList.remove("dark");
+      }
+    }
+    this.sceneManager?.onThemeChange();
+  };
 
   protected firstUpdated(): void {
     const canvas = this.shadowRoot?.getElementById(
@@ -46,6 +75,8 @@ export class ShapePuzzleCaptcha extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.themeMediaQuery?.removeEventListener("change", this.onThemeChange);
+    this.resizeObserver.disconnect();
     this.sceneManager?.dispose();
     this.interaction?.dispose();
   }
@@ -127,6 +158,7 @@ export class ShapePuzzleCaptcha extends LitElement {
       display: flex;
       flex-direction: column;
       width: 400px;
+      max-width: 100%;
       color: var(--text-color);
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
@@ -135,13 +167,13 @@ export class ShapePuzzleCaptcha extends LitElement {
       user-select: none;
 
       --font-family: "Arial";
-      --bg-color: #fff;
-      --canvas-bg-color: #f5f5f5;
+      --bg-color: #ffffff;
+      --canvas-bg-color: #e0e0e0;
       --text-color: #000;
       --primary-color: #1a73e9;
-      --on-primary-color: #fff;
+      --on-primary-color: #ffffff;
       --primary-hover-color: #1669c1;
-      --border-color: #ccc;
+      --border-color: #cccccc;
       --image-btn-color: #737373;
     }
 
@@ -149,9 +181,9 @@ export class ShapePuzzleCaptcha extends LitElement {
     :host([data-dark]) {
       --bg-color: #1f1f1f;
       --canvas-bg-color: #292929;
-      --text-color: #fff;
+      --text-color: #ffffff;
       --primary-color: #611c99;
-      --on-primary-color: #fff;
+      --on-primary-color: #ffffff;
       --primary-hover-color: #6e16c1;
       --border-color: #505050;
       --image-btn-color: #8d8d8d;
@@ -172,7 +204,7 @@ export class ShapePuzzleCaptcha extends LitElement {
 
     .canvas-container {
       position: relative;
-      height: 360px;
+      aspect-ratio: 384 / 360;
       margin: 0px 8px 8px 8px;
     }
 
@@ -214,6 +246,7 @@ export class ShapePuzzleCaptcha extends LitElement {
 
     footer {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       align-items: bottom;
       padding: 8px;
