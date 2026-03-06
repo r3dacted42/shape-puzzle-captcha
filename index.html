@@ -16,26 +16,22 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/shape-puzzle-captcha/assets/index-MZwcxJ92.js"></script>
+    <script type="module" crossorigin src="/shape-puzzle-captcha/assets/index-rq3YpJG5.js"></script>
     <link rel="stylesheet" crossorigin href="/shape-puzzle-captcha/assets/index-tn0RQdqM.css">
   </head>
   <body>
-    <shape-puzzle-captcha></shape-puzzle-captcha>
-    <p>solved: <span id="solved">false</span></p>
+    <shape-puzzle-captcha auto-dark="data"></shape-puzzle-captcha>
+    <p>solved: <span id="is-solved">false</span></p>
     <script>
       const captchaElem = document.getElementsByTagName(
         "shape-puzzle-captcha",
       )[0];
-      const solvedElem = document.getElementById("solved");
-
-      if (matchMedia("(prefers-color-scheme: dark)").matches)
-        captchaElem.classList.add("dark");
-
+      const isSolvedElem = document.getElementById("is-solved");
       captchaElem.addEventListener("shapepuzzlecaptchareset", () => {
-        solvedElem.innerText = "false";
+        isSolvedElem.innerText = "false";
       });
       captchaElem.addEventListener("shapepuzzlecaptchasolved", () => {
-        solvedElem.innerText = "true";
+        isSolvedElem.innerText = "true";
       });
     </script>
   </body>
