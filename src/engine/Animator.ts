@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { damp, damp3, dampC, dampQ } from "../utils";
 
 type Animation = {
   active: boolean;
@@ -11,7 +12,7 @@ type Animation = {
 
 export default class Animator {
   private animations = new Map<string, Animation>();
-  private speed = 0.75;
+  private speed = 0.01;
 
   public animate(
     object: THREE.Object3D,
@@ -35,54 +36,27 @@ export default class Animator {
   }
 
   public update(deltaTime: number) {
-    const t = Math.min((this.speed * deltaTime) / 100, 1.0);
+    const dt = deltaTime * this.speed;
     this.animations.forEach((animation) => {
       const { active, object, color, opacity, position, rotation } = animation;
       if (!active) return;
       let changed = false;
       const material = (object as THREE.Mesh)
-        .material as THREE.MeshBasicMaterial;
+        .material as THREE.MeshStandardMaterial;
       if (color && material) {
-        const targetColor = material.color
-          .clone()
-          .lerp(new THREE.Color(color), t);
-        if (!material.color.equals(targetColor)) {
-          changed = true;
-          material.color.copy(targetColor);
-        }
+        changed = dampC(material.color, color, 1.3, dt) || changed;
       }
       if (opacity !== undefined && material) {
-        const targetOpacity = THREE.MathUtils.lerp(
-          material.opacity,
-          opacity,
-          t,
-        );
-        if (Math.abs(material.opacity - targetOpacity) > 0.01) {
-          changed = true;
-          material.opacity = targetOpacity;
-        } else {
-          material.opacity = opacity;
-        }
+        changed = damp(material, "opacity", opacity, 1, dt) || changed;
       }
       if (position) {
-        if (object.position.distanceTo(position) > 0.01) {
-          changed = true;
-          object.position.lerp(position, t);
-        } else if (object.position.distanceTo(position) <= 0.01) {
-          object.position.copy(position);
-        }
+        changed = damp3(object.position, position, 1.3, dt) || changed;
       }
       if (rotation) {
-        const currentRotation = new THREE.Quaternion().setFromEuler(
-          object.rotation,
-        );
-        const targetRotation = new THREE.Quaternion().setFromEuler(rotation);
-        if (currentRotation.angleTo(targetRotation) > 0.01) {
-          changed = true;
-          object.rotation.setFromQuaternion(
-            currentRotation.slerp(targetRotation, t),
-          );
-        }
+        const currentRot = new THREE.Quaternion().setFromEuler(object.rotation);
+        const targetRot = new THREE.Quaternion().setFromEuler(rotation);
+        changed = dampQ(currentRot, targetRot, 0.5, dt) || changed;
+        object.rotation.setFromQuaternion(currentRot);
       }
       animation.active = changed;
     });

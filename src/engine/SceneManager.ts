@@ -84,8 +84,7 @@ export default class SceneManager {
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.setSize(width, height, false);
-    const bgColorRGBString = getComputedStyle(this.canvas).backgroundColor;
-    this.renderer.setClearColor(new THREE.Color(bgColorRGBString));
+    this.renderer.setClearColor(0x000000, 0);
 
     this.scene = new THREE.Scene();
     this.raycaster = new THREE.Raycaster();
@@ -136,11 +135,6 @@ export default class SceneManager {
     }
     this.renderer.render(this.scene, this.camera);
     this.animationFrameId = requestAnimationFrame(this.animate);
-  };
-
-  public onThemeChange = () => {
-    const bgColorRGBString = getComputedStyle(this.canvas).backgroundColor;
-    this.renderer.setClearColor(new THREE.Color(bgColorRGBString));
   };
 
   public onResize = () => {
@@ -289,7 +283,6 @@ export default class SceneManager {
       if (!closestHole || !shapeData) return;
       const [holeType, holePos] = closestHole;
       this.selectedHole = holeType;
-
       const holeAlignment =
         shapeData.holeAlignment?.find(
           (a) => a.holeType !== "any" && a.holeType.includes(holeType),
@@ -355,7 +348,6 @@ export default class SceneManager {
     this.scene?.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
         obj.geometry.dispose();
-        obj.material.dispose();
       }
     });
     this.renderer?.dispose();

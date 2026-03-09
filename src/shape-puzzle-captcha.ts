@@ -1,16 +1,28 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import SceneManager from "./engine/SceneManager";
-import Interaction from "./engine/Interaction";
 
-import reloadSvg from "./assets/reload.svg?raw";
-import infoSvg from "./assets/info.svg?raw";
-import audioSvg from "./assets/audio.svg?raw";
+import loadingSvg from "./assets/svg/loading.svg?raw";
+import checkmarkSvg from "./assets/svg/checkmark.svg?raw";
+
+import { ShapePuzzlePopup } from "./shape-puzzle-popup";
 
 @customElement("shape-puzzle-captcha")
 export class ShapePuzzleCaptcha extends LitElement {
-  @property({ type: String, attribute: "auto-dark", reflect: true })
-  public autoDark: boolean | string = false;
+  @property({ type: String, attribute: "event-key" })
+  public eventKey = "shapepuzzlecaptcha";
+
+  @property({
+    attribute: "auto-dark",
+    reflect: true,
+    converter: (value: string | null) => {
+      if (value === "data") return "data";
+      return value === "" || !!value;
+    },
+  })
+  public autoDark: boolean | "data" = false;
+
+  @property({ type: Boolean, attribute: "disable-audio" })
+  public disableAudio = false;
 
   @property({ type: Number, attribute: "shape-color" })
   public shapeColor: number = 0xa83232;
@@ -18,28 +30,18 @@ export class ShapePuzzleCaptcha extends LitElement {
   @property({ type: Number, attribute: "selected-shape-color" })
   public selectedShapeColor: number = 0xc27502;
 
-  private sceneManager: SceneManager | undefined;
-  private interaction: Interaction | undefined;
-  private infoOverlay: HTMLDivElement | undefined;
   private themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  private resizeObserver = new ResizeObserver(() => {
-    const canvas = this.shadowRoot?.getElementById(
-      "shape-puzzle-canvas",
-    ) as HTMLCanvasElement;
-    if (canvas) {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-      this.sceneManager?.onResize();
-    }
-  });
+  private popupElem: ShapePuzzlePopup | undefined;
 
   connectedCallback(): void {
     super.connectedCallback();
     this.onThemeChange(this.themeMediaQuery);
     this.themeMediaQuery.addEventListener("change", this.onThemeChange);
+    window.addEventListener("pointerdown", this.handleOutsideClick);
   }
 
   private onThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+    if (!this.autoDark) return;
     if (e.matches) {
       if (this.autoDark === "data") {
         this.setAttribute("data-dark", "");
@@ -53,122 +55,160 @@ export class ShapePuzzleCaptcha extends LitElement {
         this.classList.remove("dark");
       }
     }
-    this.sceneManager?.onThemeChange();
+    this.passThemeToPopup();
   };
 
-  protected firstUpdated(): void {
-    const canvas = this.shadowRoot?.getElementById(
-      "shape-puzzle-canvas",
-    ) as HTMLCanvasElement;
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-    this.sceneManager = new SceneManager(
-      canvas,
-      this.shapeColor,
-      this.selectedShapeColor,
-    );
-    this.interaction = new Interaction(canvas, this.sceneManager);
-    this.infoOverlay = this.shadowRoot?.getElementById(
-      "shape-puzzle-info",
-    ) as HTMLDivElement;
+  private handleOutsideClick = (e: MouseEvent) => {
+    if (!this.classList.contains("active") || !this.popupElem) return;
+    const path = e.composedPath();
+    if (!path.includes(this.popupElem as EventTarget)) {
+      this.classList.remove("active");
+      if (this.popupElem) this.popupElem.hide();
+    }
+  };
+
+  private passThemeToPopup() {
+    if (!this.popupElem) return;
+    const computedStyles = getComputedStyle(this);
+    const varsToPass = [
+      "--font-family",
+      "--bg-color",
+      "--canvas-bg-color",
+      "--text-color",
+      "--primary-color",
+      "--on-primary-color",
+      "--primary-hover-color",
+      "--border-color",
+      "--image-btn-color",
+    ];
+    for (let i = 0; i < computedStyles.length; i++) {
+      const prop = computedStyles[i];
+      if (varsToPass.includes(prop))
+        this.popupElem.style.setProperty(
+          prop,
+          computedStyles.getPropertyValue(prop),
+        );
+    }
   }
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.themeMediaQuery?.removeEventListener("change", this.onThemeChange);
-    this.resizeObserver.disconnect();
-    this.sceneManager?.dispose();
-    this.interaction?.dispose();
+  private onOpen = () => {
+    this.classList.add("active");
+    if (!this.popupElem) {
+      const elem = new ShapePuzzlePopup(
+        this.eventKey,
+        this.disableAudio,
+        this.shapeColor,
+        this.selectedShapeColor,
+      );
+      elem.addEventListener(`${this.eventKey}:reset`, this.onReset);
+      elem.addEventListener(`${this.eventKey}:solved`, this.onSolved);
+      document.body.appendChild(elem);
+      this.popupElem = elem;
+      this.passThemeToPopup();
+    } else {
+      this.popupElem.show();
+    }
+    requestAnimationFrame(() => {
+      this.positionPopup();
+    });
+  };
+
+  private positionPopup() {
+    if (!this.popupElem) return;
+    const rect = this.getBoundingClientRect();
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+
+    const popupWidth = 400;
+    const popupHeight = 560;
+    const gap = 4;
+
+    let top = rect.top + scrollY - popupHeight - gap;
+    let left = rect.left + scrollX;
+
+    const viewportWidth = window.innerWidth;
+    const padding = 8;
+
+    left = Math.max(
+      padding + scrollX,
+      Math.min(left, viewportWidth + scrollX - popupWidth - padding),
+    );
+    if (top < scrollY + padding) {
+      top = rect.bottom + scrollY + gap;
+    }
+    if (top + popupHeight > scrollY + window.innerHeight - padding) {
+      top = scrollY + window.innerHeight - popupHeight - padding;
+    }
+
+    this.popupElem.style.top = `${top}px`;
+    this.popupElem.style.left = `${left}px`;
   }
 
   private onReset = () => {
-    this.sceneManager?.onReset();
     this.dispatchEvent(
-      new CustomEvent("shapepuzzlecaptchareset", {
+      new CustomEvent(`${this.eventKey}:reset`, {
         bubbles: true,
         composed: true,
       }),
     );
   };
 
-  private toggleInfoOverlay = () => {
-    if (!this.infoOverlay) return;
-    const show = getComputedStyle(this.infoOverlay).opacity === "0";
-    this.infoOverlay.style.opacity = show ? "1" : "0";
-    this.infoOverlay.style.pointerEvents = show ? "auto" : "none";
-    if (!this.interaction) return;
-    this.interaction.enabled = !show;
+  private onSolved = () => {
+    this.classList.remove("active");
+    this.classList.add("solved");
+    if (this.popupElem) this.popupElem.style.display = "none";
+    this.dispatchEvent(
+      new CustomEvent(`${this.eventKey}:solved`, {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
-  private onVerify = () => {
-    if (this.sceneManager?.isSolved) {
-      this.dispatchEvent(
-        new CustomEvent("shapepuzzlecaptchasolved", {
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    }
-  };
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.themeMediaQuery?.removeEventListener("change", this.onThemeChange);
+    window.removeEventListener("pointerdown", this.handleOutsideClick);
+    this.popupElem?.removeEventListener(`${this.eventKey}:reset`, this.onReset);
+    this.popupElem?.removeEventListener(
+      `${this.eventKey}:solved`,
+      this.onSolved,
+    );
+    this.popupElem?.remove();
+  }
 
   render() {
     return html`
-      <header>
-        <div>Put all shapes into the</div>
-        <div class="subject">correct holes</div>
-      </header>
-
-      <div class="canvas-container">
-        <canvas id="shape-puzzle-canvas"> canvas not supported :( </canvas>
-
-        <div id="shape-puzzle-info">
-          <div>pick up shapes from here...</div>
-          <div>...and drag them into the holes here</div>
-        </div>
-      </div>
-
-      <footer>
-        <button
-          class="icon-btn"
-          id="refresh-btn"
-          .innerHTML="${reloadSvg}"
-          .onclick="${this.onReset}"
-        ></button>
-        <button
-          class="icon-btn"
-          id="audio-btn"
-          .innerHTML="${audioSvg}"
-        ></button>
-        <button
-          class="icon-btn"
-          id="info-btn"
-          .innerHTML="${infoSvg}"
-          .onclick="${this.toggleInfoOverlay}"
-        ></button>
-        <div class="spacer"></div>
-        <button class="text-btn" id="submit-btn" .onclick="${this.onVerify}">
-          Verify
-        </button>
-      </footer>
+      <button class="captcha-btn" .onclick="${this.onOpen}">
+        <div class="captcha-icon"></div>
+        <div class="captcha-loading" .innerHTML="${loadingSvg}"></div>
+        <div class="captcha-solved" .innerHTML="${checkmarkSvg}"></div>
+      </button>
+      I'm not a robot
     `;
   }
 
   static styles = css`
     :host {
-      display: flex;
-      flex-direction: column;
-      width: 400px;
-      max-width: 100%;
+      display: inline-flex;
+      flex-direction: row;
+      align-items: center;
       color: var(--text-color);
       background-color: var(--bg-color);
       border: 1px solid var(--border-color);
       border-radius: 3px;
       font-family: var(--font-family), sans-serif;
+      padding: 24px 16px;
+      width: 300px;
+      gap: 16px;
       user-select: none;
+      transition:
+        background-color 300ms,
+        color 300ms;
 
       --font-family: "Arial";
       --bg-color: #ffffff;
-      --canvas-bg-color: #e0e0e0;
+      --canvas-bg-color: #f0f0f0;
       --text-color: #000;
       --primary-color: #1a73e9;
       --on-primary-color: #ffffff;
@@ -189,108 +229,55 @@ export class ShapePuzzleCaptcha extends LitElement {
       --image-btn-color: #8d8d8d;
     }
 
-    header {
-      color: var(--on-primary-color);
-      background-color: var(--primary-color);
-      padding: 24px;
-      margin: 8px;
+    :host(.active) {
+      .captcha-btn {
+        cursor: default;
+        pointer-events: none;
 
-      .subject {
-        font-size: 1.5em;
-        font-weight: bold;
-        margin: 4px 0px 8px 0px;
+        .captcha-icon {
+          display: none;
+        }
+        .captcha-loading {
+          display: block;
+        }
       }
     }
 
-    .canvas-container {
-      position: relative;
-      aspect-ratio: 384 / 360;
-      margin: 0px 8px 8px 8px;
+    :host(.solved) {
+      .captcha-btn {
+        cursor: default;
+        pointer-events: none;
+
+        .captcha-icon {
+          display: none;
+        }
+        .captcha-solved {
+          display: block;
+        }
+      }
     }
 
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-      background-color: var(--canvas-bg-color);
-      touch-action: none;
-    }
-
-    #shape-puzzle-info {
+    .captcha-btn {
+      cursor: pointer;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-      opacity: 0;
-      background-color: rgb(from var(--bg-color) r g b / 0.5);
-      backdrop-filter: blur(4px);
-      transition: opacity 300ms;
-      pointer-events: none;
+      align-items: stretch;
+      padding: 0px;
+      background: none;
+      border: none;
+      height: 32px;
+      width: 32px;
 
       > div {
-        display: flex;
-        flex-grow: 1;
-        align-items: center;
-        justify-content: center;
-        border: 1px dashed var(--border-color);
-      }
-
-      :last-child {
-        max-height: 135px;
-      }
-    }
-
-    footer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: bottom;
-      padding: 8px;
-      margin: 0px;
-      border-top: 1px solid var(--border-color);
-
-      .spacer {
         flex: 1;
+        display: none;
       }
-
-      button {
-        cursor: pointer;
-
-        &.icon-btn {
-          background: none;
-          border: none;
-          padding: 4px;
-          margin: 0px;
-
-          svg {
-            fill: var(--image-btn-color);
-            transition: fill 0.3s;
-            height: 32px;
-            aspect-ratio: 1;
-
-            &:hover {
-              fill: var(--primary-hover-color);
-            }
-          }
-        }
-
-        &.text-btn {
-          background-color: var(--primary-color);
-          color: var(--on-primary-color);
-          border: none;
-          border-radius: 2px;
-          padding: 12px 26px;
-          font-weight: bold;
-          text-transform: uppercase;
-
-          &:hover {
-            background-color: var(--primary-hover-color);
-          }
-        }
+      .captcha-icon {
+        display: block;
+        border: 3px solid var(--border-color);
+        border-radius: 4px;
+      }
+      .captcha-loading {
+        stroke: var(--primary-color);
       }
     }
   `;

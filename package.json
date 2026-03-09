@@ -10,6 +10,7 @@
   "types": "dist/shape-puzzle-captcha.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/shape-puzzle-captcha.d.ts",
       "import": "./dist/shape-puzzle-captcha.js",
       "require": "./dist/shape-puzzle-captcha.umd.cjs"
     }

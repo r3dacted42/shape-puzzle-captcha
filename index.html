@@ -5,32 +5,77 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>shape-puzzle-captcha</title>
-    <link rel="stylesheet" href="./src/index.css" />
     <script type="module" src="/src/shape-puzzle-captcha.ts"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/holiday.css@0.11.5"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
+    />
+
     <style>
-      body {
-        font-family: monospace;
-      }
-      @media (prefers-color-scheme: dark) {
-        body {
-          color: white;
-          background-color: black;
+      footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+
+        i {
+          font-size: 1.2rem;
         }
       }
     </style>
   </head>
   <body>
-    <shape-puzzle-captcha auto-dark="data"></shape-puzzle-captcha>
-    <p>solved: <span id="is-solved">false</span></p>
+    <header>
+      <h1>shape-puzzle-captcha demo</h1>
+    </header>
+    <main>
+      <p>This is a simple demo of the shape-puzzle-captcha component.</p>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Magnam
+        obcaecati explicabo molestias veritatis, voluptas, corporis debitis quia
+        vero quos, dolorum odit voluptate repellendus deleniti quam alias.
+        Temporibus illo necessitatibus aliquid.
+      </p>
+      <p>solved: <span id="is-solved">false</span></p>
+
+      <shape-puzzle-captcha
+        event-key="captcha"
+        auto-dark
+      ></shape-puzzle-captcha>
+    </main>
+    <footer>
+      @r3dacted42/shape-puzzle-captcha
+      <a
+        title="GitHub"
+        href="https://github.com/r3dacted42/shape-puzzle-captcha"
+        target="_blank"
+      >
+        <i class="devicon-github-original"></i>
+      </a>
+      <a
+        title="npm"
+        href="https://www.npmjs.com/package/@r3dacted42/shape-puzzle-captcha"
+        target="_blank"
+      >
+        <i class="devicon-npm-plain"></i>
+      </a>
+    </footer>
+
     <script>
       const captchaElem = document.getElementsByTagName(
         "shape-puzzle-captcha",
       )[0];
       const isSolvedElem = document.getElementById("is-solved");
-      captchaElem.addEventListener("shapepuzzlecaptchareset", () => {
+      captchaElem.addEventListener("captcha:reset", () => {
         isSolvedElem.innerText = "false";
       });
-      captchaElem.addEventListener("shapepuzzlecaptchasolved", () => {
+      captchaElem.addEventListener("captcha:solved", () => {
         isSolvedElem.innerText = "true";
       });
     </script>
