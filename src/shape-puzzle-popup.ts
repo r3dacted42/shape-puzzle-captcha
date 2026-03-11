@@ -29,23 +29,28 @@ export class ShapePuzzlePopup extends LitElement {
   private interaction: Interaction | undefined;
   private infoOverlay: HTMLDivElement | undefined;
   private audioBank: Record<string, HTMLAudioElement> = {};
+  private captchaBtn: HTMLButtonElement | undefined;
 
-  constructor(
-    _eventKey?: string,
-    _disableAudio?: boolean,
-    _shapeColor?: number,
-    _selectedShapeColor?: number,
-  ) {
+  constructor(config?: {
+    eventKey?: string;
+    disableAudio?: boolean;
+    shapeColor?: number;
+    selectedShapeColor?: number;
+    captchaBtn?: HTMLButtonElement;
+  }) {
     super();
-    if (_eventKey !== undefined) this.eventKey = _eventKey;
-    if (_disableAudio !== undefined) this.disableAudio = _disableAudio;
-    if (_shapeColor !== undefined) this.shapeColor = _shapeColor;
-    if (_selectedShapeColor !== undefined)
-      this.selectedShapeColor = _selectedShapeColor;
+    if (config?.eventKey !== undefined) this.eventKey = config.eventKey;
+    if (config?.disableAudio !== undefined)
+      this.disableAudio = config.disableAudio;
+    if (config?.shapeColor !== undefined) this.shapeColor = config.shapeColor;
+    if (config?.selectedShapeColor !== undefined)
+      this.selectedShapeColor = config.selectedShapeColor;
+    if (config?.captchaBtn !== undefined) this.captchaBtn = config.captchaBtn;
   }
 
   protected firstUpdated(_changedProperties: PropertyValues): void {
     super.firstUpdated(_changedProperties);
+    this.setPosition();
     const canvas = this.shadowRoot?.querySelector(
       "canvas",
     ) as HTMLCanvasElement;
@@ -112,14 +117,53 @@ export class ShapePuzzlePopup extends LitElement {
     }
   };
 
+  private centeredMode() {
+    this.style.top = `50%`;
+    this.style.left = `50%`;
+    this.style.transform = `translate(-50%, -50%)`;
+    this.shadowRoot
+      ?.querySelector("header .caret")
+      ?.setAttribute("style", "display: none");
+  }
+
+  private setPosition() {
+    if (!this.captchaBtn) return;
+    const captchaBtnRect = this.captchaBtn.getBoundingClientRect();
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+    const top = captchaBtnRect.top + captchaBtnRect.height / 2 + scrollY - 56;
+    const left = captchaBtnRect.right + scrollX;
+    if (
+      window.innerWidth < left + this.clientWidth ||
+      window.innerHeight < top + this.clientHeight
+    ) {
+      this.centeredMode();
+      return;
+    } else {
+      this.shadowRoot
+        ?.querySelector("header .caret")
+        ?.setAttribute("style", "display: block");
+    }
+    this.style.transform = `translateX(14px)`;
+    this.style.top = `${top}px`;
+    this.style.left = `${left}px`;
+  }
+
   public show() {
     this.style.display = "flex";
     if (this.interaction) this.interaction.enabled = true;
+    if (!this.captchaBtn) return;
+    requestAnimationFrame(() => {
+      this.setPosition();
+    });
   }
 
   public hide() {
     this.style.display = "none";
     if (this.interaction) this.interaction.enabled = false;
+    requestAnimationFrame(() => {
+      this.centeredMode();
+    });
   }
 
   disconnectedCallback() {
@@ -133,6 +177,7 @@ export class ShapePuzzlePopup extends LitElement {
       <header>
         <div>Put all shapes into the</div>
         <div class="subject">correct holes</div>
+        <div class="caret"></div>
       </header>
 
       <div class="canvas-container">
@@ -173,9 +218,13 @@ export class ShapePuzzlePopup extends LitElement {
     :host {
       display: flex;
       position: absolute;
-      top: 32px;
-      left: 32px;
+      /* position-anchor: --anchor-captcha-btn;
+      position-area: right span-bottom; */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       flex-direction: column;
+      margin: 0;
       width: 400px;
       max-width: 100%;
       color: var(--text-color);
@@ -192,13 +241,27 @@ export class ShapePuzzlePopup extends LitElement {
     header {
       color: var(--on-primary-color);
       background-color: var(--primary-color);
-      padding: 24px;
+      padding: 16px;
       margin: 8px;
+      height: fit-content;
+      position: relative;
 
       .subject {
         font-size: 1.5em;
         font-weight: bold;
-        margin: 4px 0px 8px 0px;
+        margin: 4px 0px 4px 0px;
+      }
+
+      .caret {
+        position: absolute;
+        height: 16px;
+        aspect-ratio: 1;
+        background-color: var(--bg-color);
+        border: 1px solid var(--border-color);
+        top: 50%;
+        left: -8px;
+        clip-path: polygon(0 0, 0 100%, 100% 0);
+        transform: translate(-50%, -50%) rotate(-45deg);
       }
     }
 
@@ -255,7 +318,6 @@ export class ShapePuzzlePopup extends LitElement {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      align-items: bottom;
       padding: 8px;
       margin: 0px;
       border-top: 1px solid var(--border-color);
@@ -269,13 +331,13 @@ export class ShapePuzzlePopup extends LitElement {
         &.icon-btn {
           background: none;
           border: none;
-          padding: 4px;
+          padding: 0px;
           margin: 0px;
 
           svg {
             fill: var(--image-btn-color);
             transition: fill 300ms;
-            height: 32px;
+            height: 28px;
             aspect-ratio: 1;
 
             &:hover {
@@ -288,7 +350,7 @@ export class ShapePuzzlePopup extends LitElement {
           color: var(--on-primary-color);
           border: none;
           border-radius: 2px;
-          padding: 12px 26px;
+          padding: 12px 28px;
           font-weight: bold;
           text-transform: uppercase;
 

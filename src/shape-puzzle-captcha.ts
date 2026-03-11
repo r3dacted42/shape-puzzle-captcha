@@ -1,9 +1,8 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
-import loadingSvg from "./assets/svg/loading.svg?raw";
+import spinnerSvg from "./assets/svg/spinner.svg?raw";
 import checkmarkSvg from "./assets/svg/checkmark.svg?raw";
-
 import { ShapePuzzlePopup } from "./shape-puzzle-popup";
 
 @customElement("shape-puzzle-captcha")
@@ -63,7 +62,9 @@ export class ShapePuzzleCaptcha extends LitElement {
     const path = e.composedPath();
     if (!path.includes(this.popupElem as EventTarget)) {
       this.classList.remove("active");
-      if (this.popupElem) this.popupElem.hide();
+      requestAnimationFrame(() => {
+        if (this.popupElem) this.popupElem.hide();
+      });
     }
   };
 
@@ -94,12 +95,15 @@ export class ShapePuzzleCaptcha extends LitElement {
   private onOpen = () => {
     this.classList.add("active");
     if (!this.popupElem) {
-      const elem = new ShapePuzzlePopup(
-        this.eventKey,
-        this.disableAudio,
-        this.shapeColor,
-        this.selectedShapeColor,
-      );
+      const elem = new ShapePuzzlePopup({
+        eventKey: this.eventKey,
+        disableAudio: this.disableAudio,
+        shapeColor: this.shapeColor,
+        selectedShapeColor: this.selectedShapeColor,
+        captchaBtn: this.shadowRoot?.querySelector(
+          ".captcha-btn",
+        ) as HTMLButtonElement,
+      });
       elem.addEventListener(`${this.eventKey}:reset`, this.onReset);
       elem.addEventListener(`${this.eventKey}:solved`, this.onSolved);
       document.body.appendChild(elem);
@@ -108,41 +112,7 @@ export class ShapePuzzleCaptcha extends LitElement {
     } else {
       this.popupElem.show();
     }
-    requestAnimationFrame(() => {
-      this.positionPopup();
-    });
   };
-
-  private positionPopup() {
-    if (!this.popupElem) return;
-    const rect = this.getBoundingClientRect();
-    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-    const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-
-    const popupWidth = 400;
-    const popupHeight = 560;
-    const gap = 4;
-
-    let top = rect.top + scrollY - popupHeight - gap;
-    let left = rect.left + scrollX;
-
-    const viewportWidth = window.innerWidth;
-    const padding = 8;
-
-    left = Math.max(
-      padding + scrollX,
-      Math.min(left, viewportWidth + scrollX - popupWidth - padding),
-    );
-    if (top < scrollY + padding) {
-      top = rect.bottom + scrollY + gap;
-    }
-    if (top + popupHeight > scrollY + window.innerHeight - padding) {
-      top = scrollY + window.innerHeight - popupHeight - padding;
-    }
-
-    this.popupElem.style.top = `${top}px`;
-    this.popupElem.style.left = `${left}px`;
-  }
 
   private onReset = () => {
     this.dispatchEvent(
@@ -180,9 +150,9 @@ export class ShapePuzzleCaptcha extends LitElement {
   render() {
     return html`
       <button class="captcha-btn" .onclick="${this.onOpen}">
-        <div class="captcha-icon"></div>
-        <div class="captcha-loading" .innerHTML="${loadingSvg}"></div>
-        <div class="captcha-solved" .innerHTML="${checkmarkSvg}"></div>
+        <div class="captcha-box"></div>
+        <div class="captcha-spinner" .innerHTML="${spinnerSvg}"></div>
+        <div class="captcha-check" .innerHTML="${checkmarkSvg}"></div>
       </button>
       I'm not a robot
     `;
@@ -234,11 +204,31 @@ export class ShapePuzzleCaptcha extends LitElement {
         cursor: default;
         pointer-events: none;
 
-        .captcha-icon {
-          display: none;
+        .captcha-box {
+          border-radius: 50%;
+          opacity: 0;
+          transform: scale(0);
+          transition:
+            opacity 0.6s ease 0s,
+            transform 0.6s ease 0s,
+            border-radius 0.6s ease 0s;
         }
-        .captcha-loading {
-          display: block;
+        .captcha-spinner {
+          opacity: 1;
+          transform: scale(1);
+          animation-play-state: running;
+          transition:
+            opacity 0.3s ease 0.3s,
+            transform 0.3s ease 0.3s;
+
+          circle {
+            stroke-dasharray: 0, 150;
+            stroke-dashoffset: -59px;
+            animation-play-state: running;
+            transition:
+              stroke-dasharray 0.5s ease 0.5s,
+              stroke-dashoffset 0.5s ease 0.5s;
+          }
         }
       }
     }
@@ -248,36 +238,95 @@ export class ShapePuzzleCaptcha extends LitElement {
         cursor: default;
         pointer-events: none;
 
-        .captcha-icon {
-          display: none;
+        .captcha-box {
+          opacity: 0;
+          transform: scale(0);
         }
-        .captcha-solved {
-          display: block;
+        .captcha-spinner {
+          opacity: 0;
+          transform: scale(0);
+        }
+        .captcha-check {
+          stroke-dasharray: 30;
+          stroke-dashoffset: 0;
         }
       }
     }
 
     .captcha-btn {
       cursor: pointer;
-      display: flex;
-      align-items: stretch;
       padding: 0px;
       background: none;
       border: none;
       height: 32px;
       width: 32px;
+      position: relative;
 
-      > div {
-        flex: 1;
-        display: none;
+      > div,
+      > svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        margin: auto;
       }
-      .captcha-icon {
-        display: block;
+      .captcha-box {
+        box-sizing: border-box;
         border: 3px solid var(--border-color);
+        opacity: 1;
         border-radius: 4px;
+        transform: scale(1);
+        transition:
+          opacity 0.3s ease 0.3s,
+          transform 0.3s ease 0.3s,
+          border-radius 0.3s ease 0.3s;
       }
-      .captcha-loading {
+      .captcha-spinner {
         stroke: var(--primary-color);
+        opacity: 0;
+        transform: scale(0);
+        animation: spinner-rotate 1.5s linear 0.8s infinite paused;
+        transition:
+          opacity 0.3s ease 0s,
+          transform 0.3s ease 0s;
+
+        circle {
+          stroke-dasharray: 59, 150;
+          stroke-dashoffset: 0px;
+          animation: spinner-worm 1.2s ease-in-out 1s infinite paused;
+          transition:
+            stroke-dasharray 0.3s ease 0s,
+            stroke-dashoffset 0.3s ease 0s;
+        }
+      }
+      .captcha-check {
+        stroke-dasharray: 30;
+        stroke-dashoffset: 30;
+        transition:
+          stroke-dasharray 0.3s ease 0s,
+          stroke-dashoffset 0.3s ease 0s;
+      }
+    }
+
+    @keyframes spinner-rotate {
+      100% {
+        transform: scale(1) rotate(360deg);
+      }
+    }
+    @keyframes spinner-worm {
+      0% {
+        stroke-dasharray: 0, 150;
+        stroke-dashoffset: 0;
+      }
+      47.5% {
+        stroke-dasharray: 42, 150;
+        stroke-dashoffset: -16px;
+      }
+      95%,
+      100% {
+        stroke-dasharray: 42, 150;
+        stroke-dashoffset: -59px;
       }
     }
   `;
