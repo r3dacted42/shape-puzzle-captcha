@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CDN Test</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/holiday.css@0.11.5"
+    />
+    <script type="importmap">
+      {
+        "imports": {
+          "lit": "https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js",
+          "three": "https://unpkg.com/three@0.183.0/build/three.module.js",
+          "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.18/build/index.module.js",
+          "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.9.9/build/index.module.js"
+        }
+      }
+    </script>
+    <script
+      type="module"
+      src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha/dist/shape-puzzle-captcha.js"
+    ></script>
+  </head>
+  <body>
+    <header>
+      <h1>shape-puzzle-captcha CDN test</h1>
+    </header>
+    <main>
+      <p>
+        This is a simple test page for the shape-puzzle-captcha component usage
+        using an importmap and CDN. Check the source of this file to see how to
+        use it.
+      </p>
+      <p>Captcha is: <span id="solve-state">Unsolved</span></p>
+      <shape-puzzle-captcha
+        event-key="captcha"
+        auto-dark
+      ></shape-puzzle-captcha>
+      <p>
+        <button id="reset-btn" disabled>Reset</button>
+      </p>
+    </main>
+    <footer>@r3dacted42 | <a href="https://github.com/r3dacted42/shape-puzzle-captcha" target="_blank">GitHub</a></footer>
+
+    <script>
+      const captcha = document.querySelector("shape-puzzle-captcha");
+      const solveState = document.getElementById("solve-state");
+      const resetBtn = document.getElementById("reset-btn");
+
+      window.addEventListener("captcha:solved", () => {
+        solveState.textContent = "Solved!";
+        resetBtn.disabled = false;
+      });
+      window.addEventListener("captcha:reset", () => {
+        solveState.textContent = "Unsolved";
+        resetBtn.disabled = true;
+      });
+
+      resetBtn.addEventListener("click", () => {
+        captcha.reset();
+      });
+    </script>
+  </body>
+</html>

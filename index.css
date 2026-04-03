@@ -1,0 +1,164 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-dark.min.css")
+  screen and (prefers-color-scheme: dark);
+@import url("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/a11y-light.min.css")
+  screen and (prefers-color-scheme: light);
+
+body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 8px;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
+  background-color: #fff;
+  color: #151513;
+
+  a {
+    color: #005ca7;
+    text-decoration: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #151513;
+    color: #fff;
+
+    a {
+      color: #55b2ff;
+      text-decoration: none;
+    }
+  }
+}
+
+.warning {
+  background-color: #e7dc3c1a;
+  border-left: 4px solid #e7dc3c;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.controls {
+  display: flex;
+  margin: 1rem 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  user-select: none;
+}
+
+footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid #858585;
+  margin-top: 1.2rem;
+  padding: 1rem 0;
+
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+/* github corner */
+.github-corner {
+  display: block;
+  position: absolute;
+  top: 0;
+  border: 0;
+  right: 0;
+}
+.github-corner:hover .octo-arm {
+  animation: octocat-wave 560ms ease-in-out;
+}
+@keyframes octocat-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20%,
+  60% {
+    transform: rotate(-25deg);
+  }
+  40%,
+  80% {
+    transform: rotate(10deg);
+  }
+}
+@media (max-width: 500px) {
+  .github-corner:hover .octo-arm {
+    animation: none;
+  }
+  .github-corner .octo-arm {
+    animation: octocat-wave 560ms ease-in-out;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .github-corner {
+    filter: invert(1);
+  }
+}
+
+/* tweakpane */
+:root {
+  --tp-base-background-color: hsla(230, 5%, 90%, 1);
+  --tp-base-shadow-color: hsla(0, 0%, 0%, 0.1);
+  --tp-button-background-color: hsla(230, 7%, 75%, 1);
+  --tp-button-background-color-active: hsla(230, 7%, 60%, 1);
+  --tp-button-background-color-focus: hsla(230, 7%, 65%, 1);
+  --tp-button-background-color-hover: hsla(230, 7%, 70%, 1);
+  --tp-button-foreground-color: hsla(230, 10%, 30%, 1);
+  --tp-container-background-color: hsla(230, 15%, 30%, 0.2);
+  --tp-container-background-color-active: hsla(230, 15%, 30%, 0.32);
+  --tp-container-background-color-focus: hsla(230, 15%, 30%, 0.28);
+  --tp-container-background-color-hover: hsla(230, 15%, 30%, 0.24);
+  --tp-container-foreground-color: hsla(230, 10%, 30%, 1);
+  --tp-groove-foreground-color: hsla(230, 15%, 30%, 0.1);
+  --tp-input-background-color: hsla(230, 15%, 30%, 0.1);
+  --tp-input-background-color-active: hsla(230, 15%, 30%, 0.22);
+  --tp-input-background-color-focus: hsla(230, 15%, 30%, 0.18);
+  --tp-input-background-color-hover: hsla(230, 15%, 30%, 0.14);
+  --tp-input-foreground-color: hsla(230, 10%, 30%, 1);
+  --tp-label-foreground-color: hsla(230, 10%, 30%, 0.7);
+  --tp-monitor-background-color: hsla(230, 15%, 30%, 0.1);
+  --tp-monitor-foreground-color: hsla(230, 10%, 30%, 0.5);
+  --tp-base-font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tp-base-background-color: hsla(0, 0%, 0%, 1);
+    --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
+    --tp-button-background-color: hsla(0, 0%, 70%, 1);
+    --tp-button-background-color-active: hsla(0, 0%, 85%, 1);
+    --tp-button-background-color-focus: hsla(0, 0%, 80%, 1);
+    --tp-button-background-color-hover: hsla(0, 0%, 75%, 1);
+    --tp-button-foreground-color: hsla(0, 0%, 0%, 1);
+    --tp-container-background-color: hsla(0, 0%, 10%, 1);
+    --tp-container-background-color-active: hsla(0, 0%, 25%, 1);
+    --tp-container-background-color-focus: hsla(0, 0%, 20%, 1);
+    --tp-container-background-color-hover: hsla(0, 0%, 15%, 1);
+    --tp-container-foreground-color: hsla(0, 0%, 50%, 1);
+    --tp-groove-foreground-color: hsla(0, 0%, 10%, 1);
+    --tp-input-background-color: hsla(0, 0%, 10%, 1);
+    --tp-input-background-color-active: hsla(0, 0%, 25%, 1);
+    --tp-input-background-color-focus: hsla(0, 0%, 20%, 1);
+    --tp-input-background-color-hover: hsla(0, 0%, 15%, 1);
+    --tp-input-foreground-color: hsla(0, 0%, 70%, 1);
+    --tp-label-foreground-color: hsla(0, 0%, 50%, 1);
+    --tp-monitor-background-color: hsla(0, 0%, 8%, 1);
+    --tp-monitor-foreground-color: hsla(0, 0%, 48%, 1);
+  }
+}
