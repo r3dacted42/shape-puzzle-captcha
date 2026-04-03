@@ -121,6 +121,22 @@ export default class SceneManager {
       .filter((i) => !this.shapeMap.get(i.object.name as ShapeType)?.solved);
   };
 
+  public onColorChange = (
+    _shapeColor: THREE.ColorRepresentation,
+    _selectedShapeColor: THREE.ColorRepresentation,
+  ) => {
+    this.shapeColor = _shapeColor;
+    this.selectedShapeColor = _selectedShapeColor;
+    for (const { mesh } of this.shapeMap.values()) {
+      const material = mesh.material as THREE.MeshStandardMaterial;
+      if (mesh.name === this.selectedShape) {
+        material.color.set(this.selectedShapeColor);
+      } else {
+        material.color.set(this.shapeColor);
+      }
+    }
+  };
+
   private animate = (timestamp: number = 0) => {
     const dt = timestamp - this.lastFrameTimestamp; // ms
     if (dt < 1000 / this.frameRate) {

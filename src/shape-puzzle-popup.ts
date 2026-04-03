@@ -7,41 +7,34 @@ import reloadSvg from "./assets/svg/reload.svg?raw";
 import infoSvg from "./assets/svg/info.svg?raw";
 import audioSvg from "./assets/svg/audio.svg?raw";
 
-import esHoraDeMimir from "./assets/audio/es-hora-de-mimir.mp3";
-import animeWow from "./assets/audio/anime-wow.mp3";
-import fahhhh from "./assets/audio/actually-good-fahhhh-sfx.mp3";
-
 @customElement("shape-puzzle-popup")
 export class ShapePuzzlePopup extends LitElement {
-  @property({ type: String, attribute: "event-key" })
   public eventKey = "shapepuzzlecaptcha";
+  public disableAudioBtn = false;
 
-  @property({ type: Boolean, attribute: "disable-audio" })
-  public disableAudio = false;
-
-  @property({ type: Number, attribute: "shape-color" })
+  @property({ type: Number })
   public shapeColor: number = 0xa83232;
-
-  @property({ type: Number, attribute: "selected-shape-color" })
+  @property({ type: Number })
   public selectedShapeColor: number = 0xc27502;
+  @property({ type: Number })
+  public resetTrigger: number = 0;
 
   private sceneManager: SceneManager | undefined;
   private interaction: Interaction | undefined;
   private infoOverlay: HTMLDivElement | undefined;
-  private audioBank: Record<string, HTMLAudioElement> = {};
   private captchaBtn: HTMLButtonElement | undefined;
 
   constructor(config?: {
     eventKey?: string;
-    disableAudio?: boolean;
+    disableAudioBtn?: boolean;
     shapeColor?: number;
     selectedShapeColor?: number;
     captchaBtn?: HTMLButtonElement;
   }) {
     super();
     if (config?.eventKey !== undefined) this.eventKey = config.eventKey;
-    if (config?.disableAudio !== undefined)
-      this.disableAudio = config.disableAudio;
+    if (config?.disableAudioBtn !== undefined)
+      this.disableAudioBtn = config.disableAudioBtn;
     if (config?.shapeColor !== undefined) this.shapeColor = config.shapeColor;
     if (config?.selectedShapeColor !== undefined)
       this.selectedShapeColor = config.selectedShapeColor;
@@ -65,12 +58,20 @@ export class ShapePuzzlePopup extends LitElement {
     this.infoOverlay = this.shadowRoot?.querySelector(
       ".shape-puzzle-info",
     ) as HTMLDivElement;
-    if (!this.disableAudio)
-      [esHoraDeMimir, animeWow, fahhhh].forEach((src) => {
-        const audio = new Audio(src);
-        audio.preload = "auto";
-        this.audioBank[src] = audio;
-      });
+    window.addEventListener("scroll", this.setPosition.bind(this), {
+      passive: true,
+    });
+    window.addEventListener("resize", this.setPosition.bind(this), {
+      passive: true,
+    });
+  }
+
+  protected updated(_changedProperties: PropertyValues): void {
+    super.updated(_changedProperties);
+    if (this.sceneManager)
+      this.sceneManager.onColorChange(this.shapeColor, this.selectedShapeColor);
+    if (this.resetTrigger !== 0 && _changedProperties.has("resetTrigger"))
+      this.onReset();
   }
 
   private onReset = () => {
@@ -83,17 +84,13 @@ export class ShapePuzzlePopup extends LitElement {
     );
   };
 
-  private playAudio(src: string) {
-    if (this.disableAudio) return;
-    const audio = this.audioBank[src];
-    if (!audio) return;
-    audio.src = src;
-    audio.currentTime = 0;
-    audio.play();
-  }
-
   private onAudioClicked = () => {
-    this.playAudio(esHoraDeMimir);
+    this.dispatchEvent(
+      new CustomEvent(`${this.eventKey}:audio`, {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
   private toggleInfoOverlay = () => {
@@ -101,6 +98,13 @@ export class ShapePuzzlePopup extends LitElement {
     const show = getComputedStyle(this.infoOverlay).opacity === "0";
     this.infoOverlay.classList.toggle("active", show);
     if (this.interaction) this.interaction.enabled = !show;
+    if (show)
+      this.dispatchEvent(
+        new CustomEvent(`${this.eventKey}:info`, {
+          bubbles: true,
+          composed: true,
+        }),
+      );
   };
 
   private onVerify = () => {
@@ -111,9 +115,14 @@ export class ShapePuzzlePopup extends LitElement {
           composed: true,
         }),
       );
-      this.playAudio(animeWow);
     } else {
-      this.playAudio(fahhhh);
+      this.sceneManager?.onReset();
+      this.dispatchEvent(
+        new CustomEvent(`${this.eventKey}:failed`, {
+          bubbles: true,
+          composed: true,
+        }),
+      );
     }
   };
 
@@ -129,20 +138,26 @@ export class ShapePuzzlePopup extends LitElement {
   private setPosition() {
     if (!this.captchaBtn) return;
     const captchaBtnRect = this.captchaBtn.getBoundingClientRect();
+    const captchaBtnCenterY = captchaBtnRect.top + captchaBtnRect.height / 2;
     const scrollY = window.pageYOffset || document.documentElement.scrollTop;
     const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
-    const top = captchaBtnRect.top + captchaBtnRect.height / 2 + scrollY - 56;
+    let top = captchaBtnCenterY + scrollY - 56;
+    let caretTop = 56;
+    if (top + this.clientHeight > scrollY + window.innerHeight) {
+      top = Math.max(
+        scrollY + window.innerHeight - this.clientHeight - 8,
+        captchaBtnCenterY + scrollY - this.clientHeight + 28,
+      );
+      caretTop = captchaBtnCenterY + scrollY - top;
+    }
+    // caret top wrt popup
+    this.shadowRoot
+      ?.querySelector(".caret")
+      ?.setAttribute("style", `display: block; top: ${caretTop}px`);
     const left = captchaBtnRect.right + scrollX;
-    if (
-      window.innerWidth < left + this.clientWidth ||
-      window.innerHeight < top + this.clientHeight
-    ) {
+    if (window.innerWidth < left + this.clientWidth) {
       this.centeredMode();
       return;
-    } else {
-      this.shadowRoot
-        ?.querySelector("header .caret")
-        ?.setAttribute("style", "display: block");
     }
     this.style.transform = `translateX(14px)`;
     this.style.top = `${top}px`;
@@ -168,6 +183,8 @@ export class ShapePuzzlePopup extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("scroll", this.setPosition);
+    window.removeEventListener("resize", this.setPosition);
     this.sceneManager?.dispose();
     this.interaction?.dispose();
   }
@@ -177,8 +194,9 @@ export class ShapePuzzlePopup extends LitElement {
       <header>
         <div>Put all shapes into the</div>
         <div class="subject">correct holes</div>
-        <div class="caret"></div>
       </header>
+
+      <div class="caret"></div>
 
       <div class="canvas-container">
         <canvas> canvas not supported :( </canvas>
@@ -197,7 +215,7 @@ export class ShapePuzzlePopup extends LitElement {
         ></button>
         <button
           class="icon-btn"
-          style="display: ${this.disableAudio ? "none" : "block"}"
+          style="display: ${this.disableAudioBtn ? "none" : "block"}"
           .innerHTML="${audioSvg}"
           .onclick="${this.onAudioClicked}"
         ></button>
@@ -218,8 +236,6 @@ export class ShapePuzzlePopup extends LitElement {
     :host {
       display: flex;
       position: absolute;
-      /* position-anchor: --anchor-captcha-btn;
-      position-area: right span-bottom; */
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -251,18 +267,18 @@ export class ShapePuzzlePopup extends LitElement {
         font-weight: bold;
         margin: 4px 0px 4px 0px;
       }
+    }
 
-      .caret {
-        position: absolute;
-        height: 16px;
-        aspect-ratio: 1;
-        background-color: var(--bg-color);
-        border: 1px solid var(--border-color);
-        top: 50%;
-        left: -8px;
-        clip-path: polygon(0 0, 0 100%, 100% 0);
-        transform: translate(-50%, -50%) rotate(-45deg);
-      }
+    .caret {
+      position: absolute;
+      height: 16px;
+      aspect-ratio: 1;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      top: 32px;
+      left: 0;
+      clip-path: polygon(0 0, 0 100%, 100% 0);
+      transform: translate(-50%, -50%) rotate(-45deg);
     }
 
     .canvas-container {

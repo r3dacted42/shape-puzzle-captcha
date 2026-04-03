@@ -11,12 +11,16 @@ export default defineConfig(({ mode }) => {
 
     build: {
       outDir: isDemo ? "dist-demo" : "dist",
+      copyPublicDir: isDemo,
       lib: isDemo
         ? undefined
         : {
             entry: "src/shape-puzzle-captcha.ts",
             name: "ShapePuzzleCaptcha",
-            fileName: (format) => `shape-puzzle-captcha.${format}.js`,
+            fileName: (format) =>
+              format === "es"
+                ? "shape-puzzle-captcha.js"
+                : "shape-puzzle-captcha.cjs",
             formats: ["es", "umd"],
           },
       rollupOptions: {
