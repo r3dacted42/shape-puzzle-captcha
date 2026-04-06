@@ -10,7 +10,7 @@ export class ShapePuzzleCaptcha extends LitElement {
   @property({ type: String, attribute: "event-key", reflect: true })
   public eventKey = "shapepuzzlecaptcha";
 
-  @property({ type: Boolean, attribute: "disable-audio-btn", reflect: true })
+  @property({ type: Boolean, attribute: "disable-audio", reflect: true })
   public disableAudioBtn = false;
 
   @property({
@@ -36,7 +36,9 @@ export class ShapePuzzleCaptcha extends LitElement {
 
   private themeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   private popupElem: ShapePuzzlePopup | undefined;
-  private mutationObserver = new MutationObserver(() => this.passThemeToPopup());
+  private mutationObserver = new MutationObserver(() =>
+    this.passThemeToPopup(),
+  );
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -48,7 +50,10 @@ export class ShapePuzzleCaptcha extends LitElement {
 
   protected updated(_changedProperties: PropertyValues): void {
     super.updated(_changedProperties);
+    console.log("disableAudioBtn:", this.disableAudioBtn);
     if (this.popupElem) {
+      this.popupElem.eventKey = this.eventKey;
+      this.popupElem.disableAudioBtn = this.disableAudioBtn;
       this.popupElem.shapeColor = this.shapeColor;
       this.popupElem.selectedShapeColor = this.selectedShapeColor;
     }
@@ -105,6 +110,7 @@ export class ShapePuzzleCaptcha extends LitElement {
     if (!this.popupElem) {
       const elem = new ShapePuzzlePopup({
         eventKey: this.eventKey,
+        disableAudioBtn: this.disableAudioBtn,
         shapeColor: this.shapeColor,
         selectedShapeColor: this.selectedShapeColor,
         captchaBtn: this.shadowRoot?.querySelector(
@@ -167,9 +173,7 @@ export class ShapePuzzleCaptcha extends LitElement {
         background-color 300ms,
         color 300ms;
 
-      --font-family:
-        system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      --font-family: system-ui, -apple-system, sans-serif;
       --bg-color: #ffffff;
       --canvas-bg-color: #f0f0f0;
       --text-color: #000;

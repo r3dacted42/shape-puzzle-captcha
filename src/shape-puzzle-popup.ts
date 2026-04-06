@@ -9,13 +9,16 @@ import audioSvg from "./assets/svg/audio.svg?raw";
 
 @customElement("shape-puzzle-popup")
 export class ShapePuzzlePopup extends LitElement {
+  @property({ type: String })
   public eventKey = "shapepuzzlecaptcha";
+  @property({ type: Boolean })
   public disableAudioBtn = false;
 
   @property({ type: Number })
   public shapeColor: number = 0xa83232;
   @property({ type: Number })
   public selectedShapeColor: number = 0xc27502;
+  
   @property({ type: Number })
   public resetTrigger: number = 0;
 
@@ -131,7 +134,7 @@ export class ShapePuzzlePopup extends LitElement {
     this.style.left = `50%`;
     this.style.transform = `translate(-50%, -50%)`;
     this.shadowRoot
-      ?.querySelector("header .caret")
+      ?.querySelector(".caret")
       ?.setAttribute("style", "display: none");
   }
 

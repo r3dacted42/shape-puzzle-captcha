@@ -5,59 +5,34 @@ function init() {
   const pane = new Pane({
     title: "Captcha Config",
     container: document.querySelector('.controls'),
-    expanded: false,
+    expanded: true,
   });
-  const markupElem = document.getElementById("markup");
-  const eventJsElem = document.getElementById("eventjs");
 
   const defaultParams = {
     state: "Unsolved",
-    eventKey: "captcha",
     autoDark: true,
     dark: false,
+    disableAudio: false,
     shapeColor: 0xa83232,
     selectedShapeColor: 0xc27502,
   };
-  const params = {
-    ...defaultParams,
-  };
+  const params = { ...defaultParams };
 
+  // Status Monitor
   pane.addBinding(params, "state", { label: "State" })
     .controller.view.element.querySelector("input").style.pointerEvents = "none";
-  const onReset = () => {
-    params.state = "Unsolved";
-    pane.refresh();
-  };
-  const onFailed = () => {
-    params.state = "Failed";
-    pane.refresh();
-  };
-  const onSolved = () => {
-    params.state = "Solved";
-    pane.refresh();
-  };
-  document.addEventListener(`${params.eventKey}:reset`, onReset);
-  document.addEventListener(`${params.eventKey}:failed`, onFailed);
-  document.addEventListener(`${params.eventKey}:solved`, onSolved);
 
-  pane.addBlade({
-    view: 'separator',
-  });
+  const onReset = () => { params.state = "Unsolved"; pane.refresh(); };
+  const onFailed = () => { params.state = "Failed"; pane.refresh(); };
+  const onSolved = () => { params.state = "Solved"; pane.refresh(); };
 
-  pane.addBinding(params, "eventKey", {
-    label: "Event Key",
-  }).on("change", (ev) => {
-    const newEventKey = ev.value || "shapepuzzlecaptcha";
-    document.removeEventListener(`${params.eventKey}:reset`, onReset);
-    document.removeEventListener(`${params.eventKey}:failed`, onFailed);
-    document.removeEventListener(`${params.eventKey}:solved`, onSolved);
-    params.eventKey = newEventKey;
-    document.addEventListener(`${params.eventKey}:reset`, onReset);
-    document.addEventListener(`${params.eventKey}:failed`, onFailed);
-    document.addEventListener(`${params.eventKey}:solved`, onSolved);
-    captchaElem.setAttribute("event-key", params.eventKey);
-  });
+  document.addEventListener(`captcha:reset`, onReset);
+  document.addEventListener(`captcha:failed`, onFailed);
+  document.addEventListener(`captcha:solved`, onSolved);
 
+  pane.addBlade({ view: 'separator' });
+
+  // Theme Controls
   pane.addBinding(params, "autoDark", {
     view: 'list',
     label: 'Auto Dark',
@@ -72,8 +47,9 @@ function init() {
       captchaElem.setAttribute("auto-dark", 'data');
       return;
     }
-    if (ev.value) captchaElem.setAttribute("auto-dark", '');
-    else {
+    if (ev.value) {
+      captchaElem.setAttribute("auto-dark", '');
+    } else {
       captchaElem.removeAttribute("auto-dark");
       darkBinding.disabled = false;
     }
@@ -90,6 +66,15 @@ function init() {
     }
   });
 
+  pane.addBinding(params, "disableAudio", {
+    view: 'toggle',
+    label: 'Disable Audio',
+  }).on("change", (ev) => {
+    if (ev.value) captchaElem.setAttribute("disable-audio", "true");
+    else captchaElem.removeAttribute("disable-audio");
+  });
+
+  // Color Controls
   pane.addBinding(params, "shapeColor", {
     label: "Shape Color",
     view: 'color',
@@ -105,7 +90,9 @@ function init() {
     captchaElem.setAttribute("selected-shape-color", ev.value);
   });
 
-  pane.addButton({ title: "Reset" }).on("click", () => {
+  // Reset Button
+  pane.addButton({ title: "Reset Captcha" }).on("click", () => {
+    captchaElem.setAttribute("disable-audio", defaultParams.disableAudio ? "true" : undefined);
     captchaElem.setAttribute("shape-color", defaultParams.shapeColor);
     captchaElem.setAttribute("selected-shape-color", defaultParams.selectedShapeColor);
     captchaElem.reset();
@@ -115,30 +102,11 @@ function init() {
     pane.refresh();
   });
 
-  const updateMarkup = () => {
-    markupElem.textContent = `<shape-puzzle-captcha
-  event-key="${params.eventKey}"\
-${params.autoDark === true ? '\n  auto-dark' : params.autoDark === 'data' ? '\n  auto-dark="data"' : ''}\
-${params.dark === true ? '\n  data-dark' : ''}
-  shape-color="0x${params.shapeColor.toString(16).padStart(6, '0')}"
-  selected-shape-color="0x${params.selectedShapeColor.toString(16).padStart(6, '0')}"
-></shape-puzzle-captcha>`;
-    markupElem.removeAttribute("data-highlighted");
-    eventJsElem.textContent = `window.addEventListener('${params.eventKey}:solved', (e) => { ... });
-window.addEventListener('${params.eventKey}:reset', (e) => { ... });
-window.addEventListener('${params.eventKey}:failed', (e) => { ... });`;
-    eventJsElem.removeAttribute("data-highlighted");
-    hljs.highlightAll();
-  };
-  updateMarkup();
-  const observer = new MutationObserver(updateMarkup);
-  observer.observe(captchaElem, { attributes: true, childList: true, subtree: true });
-
+  // Cleanup
   return () => {
-    document.removeEventListener(`${params.eventKey}:reset`, onReset);
-    document.removeEventListener(`${params.eventKey}:failed`, onFailed);
-    document.removeEventListener(`${params.eventKey}:solved`, onSolved);
-    observer.disconnect();
+    document.removeEventListener(`captcha:reset`, onReset);
+    document.removeEventListener(`captcha:failed`, onFailed);
+    document.removeEventListener(`captcha:solved`, onSolved);
   };
 }
 
