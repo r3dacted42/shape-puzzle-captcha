@@ -1,5 +1,10 @@
 # shape-puzzle-captcha
 
+[![npm version](https://img.shields.io/npm/v/@r3dacted42/shape-puzzle-captcha.svg)](https://www.npmjs.com/package/@r3dacted42/shape-puzzle-captcha)
+[![npm downloads](https://img.shields.io/npm/dt/@r3dacted42/shape-puzzle-captcha.svg)](https://www.npmjs.com/package/@r3dacted42/shape-puzzle-captcha)
+[![bundle size](https://deno.bundlejs.com/badge?q=@r3dacted42/shape-puzzle-captcha)](https://bundlejs.com/?q=@r3dacted42/shape-puzzle-captcha)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 An interactive 3D Web Component captcha UI inspired by the (in)famous "Square Hole" meme. Users must drag and drop 3D shapes into their ~~in~~correct holes to pass the verification. Built with Lit, Three.js, and CSG (Constructive Solid Geometry).
 
 [Demo Page](https://r3dacted42.github.io/shape-puzzle-captcha/)
@@ -53,7 +58,7 @@ If you aren't using a bundler, you can use the component directly in the browser
 Once registered, use the `<shape-puzzle-captcha>` tag anywhere in your HTML or JSX templates, and listen for events.
 
 ```html
-<shape-puzzle-captcha> </shape-puzzle-captcha>
+<shape-puzzle-captcha auto-dark> </shape-puzzle-captcha>
 
 <button id="submit-btn" disabled>Humans Only Please!</button>
 
@@ -62,7 +67,7 @@ Once registered, use the `<shape-puzzle-captcha>` tag anywhere in your HTML or J
 
   document.addEventListener("shapepuzzlecaptcha:solved", (e) => {
     // A backend is essential for a truly secure captcha!
-    // if (someBackendCall(clientInfo).verified)
+    // if (someBackendCall(clientInfo).isVerified)
     submitBtn.disabled = false;
   });
 </script>
@@ -77,7 +82,7 @@ Once registered, use the `<shape-puzzle-captcha>` tag anywhere in your HTML or J
 | `event-key` | String | `"shapepuzzlecaptcha"` | The namespace for the custom events emitted by the component. |
 | `shape-color` | Number (Hex) | `0xa83232` | Hex color code for the default, unselected shapes. |
 | `selected-shape-color` | Number (Hex) | `0xc27502` | Hex color code for the shape currently being dragged. |
-| `disable-audio` | Boolean | `false` | Set `true` to hide the audio <img style="height: 1.2em; background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/audio.svg?raw=true" ></img> button |  
+| `disable-audio` | Boolean | `false` | Set `true` to hide the audio <img height="20" style="background-color: whitesmoke" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/audio.svg?raw=true" ></img> button |
 | `auto-dark` | Boolean \| `"data"` | `false` | Set it `true` to follow the browser's color scheme. |
 
 > [!TIP]
@@ -96,9 +101,9 @@ The component emits global events that bubble up to the document/window.
 | ---------- | ----------- |
 | `shapepuzzlecaptcha:solved` | User clicks "Verify" and all shapes are in the correct holes. |
 | `shapepuzzlecaptcha:failed` | User clicks "Verify" but the shapes are placed incorrectly. |
-| `shapepuzzlecaptcha:reset` | User clicks the reset <img style="height: 1.2em; background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/reload.svg?raw=true" ></img> button or the `reset()` function is called. |
-| `shapepuzzlecaptcha:audio` | User clicks the audio <img style="height: 1.2em; background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/audio.svg?raw=true" ></img> button. |
-| `shapepuzzlecaptcha:info` | User clicks the info <img style="height: 1.2em; background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/info.svg?raw=true" ></img> button. |
+| `shapepuzzlecaptcha:reset` | User clicks the reset <img height="20" style="background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/reload.svg?raw=true" ></img> button or the `reset()` function is called. |
+| `shapepuzzlecaptcha:audio` | User clicks the audio <img height="20" style="background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/audio.svg?raw=true" ></img> button. |
+| `shapepuzzlecaptcha:info` | User clicks the info <img height="20" style="background-color: whitesmoke;" src="https://github.com/r3dacted42/shape-puzzle-captcha/blob/main/src/assets/svg/info.svg?raw=true" ></img> button. |
 
 > [!TIP]
 > The event names are dynamically prefixed by your `event-key`, so if you have `event-key="meow"` on the component, then you'll get events like `meow:solved`, `meow:failed`, `meow:reset`, etc.

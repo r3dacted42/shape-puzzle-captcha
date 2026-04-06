@@ -1,10 +1,10 @@
 {
   "name": "@r3dacted42/shape-puzzle-captcha",
-  "description": "Web component for a shape puzzle based captcha. Drag and drop shapes into the correct holes to pass!",
+  "description": "Web component for a shape puzzle based captcha UI, based on the square hole meme. Drag and drop shapes into the correct holes to pass!",
   "license": "MIT",
   "author": "r3dacted42",
   "homepage": "https://r3dacted42.github.io/shape-puzzle-captcha/",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "type": "module",
   "main": "dist/shape-puzzle-captcha.cjs",
   "module": "dist/shape-puzzle-captcha.js",
