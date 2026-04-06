@@ -4,175 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/shape-puzzle-captcha/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>shape-puzzle-captcha</title>
+    <title>shape-puzzle-captcha demo</title>
     <link rel="stylesheet" type="text/css" href="/shape-puzzle-captcha/index.css" />
     <link
       rel="stylesheet"
       type="text/css"
       href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
     />
-    <script type="module" crossorigin src="/shape-puzzle-captcha/assets/index-d4-P15mj.js"></script>
+    <script type="module" crossorigin src="/shape-puzzle-captcha/assets/index-Cfq8IOn9.js"></script>
   </head>
   <body>
-    <header>
-      <h1>shape-puzzle-captcha</h1>
-    </header>
-
-    <main>
-      <p><strong>Everything goes into the square hole!</strong></p>
-      <p class="warning">
-        The component itself only provides the visual aspects of a 3D shape
-        puzzle and a captcha-like interface. This can be spoofed and is not
-        meant to protect you from attacks. For actually secure captchas, a
-        backend is required. To integrate this component with a backend, listen
-        for the <code>solved</code> event and verify other client info on the
-        backend.
-      </p>
-
-      <shape-puzzle-captcha
-        event-key="captcha"
-        auto-dark=""
-      ></shape-puzzle-captcha>
-
-      <p>
-        Tweak with the colors and reset the captcha to see how it works. The
-        state will be updated in real-time as you interact with the captcha. Try
-        to solve the puzzle!
-      </p>
-
-      <div class="controls"></div>
-
-      <hr />
-
-      <h2>Quick Start</h2>
-      <h3>Using a package manager</h3>
-      <ul>
-        <li>
-          Install the package from npm:
-          <pre><code>npm install @r3dacted42/shape-puzzle-captcha</code></pre>
-        </li>
-        <li>
-          Register the component:
-          <pre><code>import '@r3dacted42/shape-puzzle-captcha';</code></pre>
-        </li>
-        <li id="add-to-markup">
-          Add the component to your markup:
-          <pre><code class="language-html" id="markup"></code></pre>
-        </li>
-        <li>
-          Listen for events:<br />
-          The event key is customizable via the
-          <code>event-key</code> attribute, but defaults to
-          "shapepuzzlecaptcha".
-          <pre><code id="eventjs">window.addEventListener('captcha:solved', (e) => { ... });
-window.addEventListener('captcha:reset', (e) => { ... });
-window.addEventListener('captcha:failed', (e) => { ... });</code></pre>
-          For the complete list of events and methods, check out the
-          <a href="https://github.com/r3dacted42/shape-puzzle-captcha#readme"
-            >repository README</a
-          >.
-        </li>
-      </ul>
-      <h3>Using a CDN</h3>
-      <ul>
-        <li>
-          Add the importmap and component script to your HTML:
-          <pre><code class="language-html">&lt;script type="importmap"&gt;
-  {
-    "imports": {
-      "lit": "https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js",
-      "three": "https://unpkg.com/three@0.183.0/build/three.module.js",
-      "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.18/build/index.module.js",
-      "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.9.9/build/index.module.js"
-    }
-  }
-&lt;/script&gt;
-&lt;script
-  type="module"
-  src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha/dist/shape-puzzle-captcha.js"
-&lt;/script&gt;</code></pre>
-        </li>
-        <li>
-          Then you can
-          <a href="#add-to-markup">add the component to your markup</a> as
-          described in the previous section.
-        </li>
-      </ul>
-
-      <hr />
-
-      <h2>Inspiration</h2>
-      <p>
-        I was inspired to make this component after seeing the below YouTube
-        short:
-      </p>
-      <iframe
-        width="315"
-        height="560"
-        src="https://youtube.com/embed/JsJpwtgTcLk"
-        title="YouTube video player"
-        frameborder="0"
-        allow="
-          accelerometer;
-          autoplay;
-          clipboard-write;
-          encrypted-media;
-          gyroscope;
-          picture-in-picture;
-          web-share;
-        "
-        allowfullscreen
-      ></iframe>
-      <p>...which was based on videos by the below creator:</p>
-      <iframe
-        width="560"
-        height="315"
-        src="https://youtube.com/embed/cUbIkNUFs-4"
-        title="YouTube video player"
-        frameborder="0"
-        allow="
-          accelerometer;
-          autoplay;
-          clipboard-write;
-          encrypted-media;
-          gyroscope;
-          picture-in-picture;
-          web-share;
-        "
-        allowfullscreen
-      ></iframe>
-      <p>
-        For more info, check out the
-        <a href="https://knowyourmeme.com/memes/the-square-hole" target="_blank"
-          >KYM page</a
-        >.
-      </p>
-    </main>
-
-    <footer>
-      @r3dacted42/shape-puzzle-captcha
-      <a
-        title="GitHub"
-        href="https://github.com/r3dacted42/shape-puzzle-captcha"
-        target="_blank"
-      >
-        <i class="devicon-github-original"></i>
-      </a>
-      <a
-        title="npm"
-        href="https://www.npmjs.com/package/@r3dacted42/shape-puzzle-captcha"
-        target="_blank"
-      >
-        <i class="devicon-npm-plain"></i>
-      </a>
-    </footer>
-
-    <!-- github corner: https://tholman.com/github-corners/ -->
     <a
       href="https://github.com/r3dacted42/shape-puzzle-captcha"
       class="github-corner"
       aria-label="View source on GitHub"
-      ><svg
+    >
+      <svg
         width="80"
         height="80"
         viewBox="0 0 250 250"
@@ -186,26 +33,118 @@ window.addEventListener('captcha:failed', (e) => { ... });</code></pre>
         "
         aria-hidden="true"
       >
-        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z" />
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
         <path
           d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
           fill="currentColor"
           style="transform-origin: 130px 106px"
           class="octo-arm"
-        />
+        ></path>
         <path
           d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
           fill="currentColor"
           class="octo-body"
-        /></svg
-    ></a>
+        ></path>
+      </svg>
+    </a>
 
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"
-      integrity="sha512-EBLzUL8XLl+va/zAsmXwS7Z2B1F9HUHkZwyS/VKwh3S7T/U0nF4BaU29EP/ZSf6zgiIxYAnKLu6bJ8dqpmX5uw=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
+    <header class="hero">
+      <h1>shape-puzzle-captcha</h1>
+      <p class="subtitle">Everything goes into the square hole!</p>
+      <a
+        href="https://github.com/r3dacted42/shape-puzzle-captcha#readme"
+        class="btn-primary"
+        target="_blank"
+      >
+        View Documentation &rarr;
+      </a>
+    </header>
+
+    <main>
+      <div class="interactive-area">
+        <shape-puzzle-captcha
+          event-key="captcha"
+          auto-dark=""
+        ></shape-puzzle-captcha>
+
+        <div class="controls"></div>
+      </div>
+
+      <div class="callout warning">
+        This component provides the UI for a puzzle. Because the verification
+        happens in the browser, it can be bypassed via the developer console. Do
+        not use this as your sole line of defense against bot attacks on
+        sensitive endpoints.
+      </div>
+
+      <hr />
+
+      <section class="inspiration">
+        <h2>Inspiration</h2>
+        <p>
+          This project was inspired by the (in)famous "Square Hole" meme.
+          Check out the origins below:
+        </p>
+        <div class="video-grid">
+          <iframe
+            src="https://youtube.com/embed/JsJpwtgTcLk"
+            title="YouTube video player"
+            frameborder="0"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            allowfullscreen
+          ></iframe>
+          <iframe
+            src="https://youtube.com/embed/cUbIkNUFs-4"
+            title="YouTube video player"
+            frameborder="0"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            allowfullscreen
+          ></iframe>
+        </div>
+        <p style="text-align: center; margin-top: 1rem">
+          <a
+            href="https://knowyourmeme.com/memes/the-square-hole"
+            target="_blank"
+            >Read more on Know Your Meme</a
+          >
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <span>@r3dacted42/shape-puzzle-captcha</span>
+      <div class="social-links">
+        <a
+          title="GitHub"
+          href="https://github.com/r3dacted42/shape-puzzle-captcha"
+          target="_blank"
+          ><i class="devicon-github-original"></i
+        ></a>
+        <a
+          title="npm"
+          href="https://www.npmjs.com/package/@r3dacted42/shape-puzzle-captcha"
+          target="_blank"
+          ><i class="devicon-npm-plain"></i
+        ></a>
+      </div>
+    </footer>
+
     <script src="/shape-puzzle-captcha/index.js" type="module"></script>
   </body>
 </html>
