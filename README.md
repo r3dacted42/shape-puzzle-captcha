@@ -7,6 +7,8 @@
 
 An interactive 3D Web Component captcha UI inspired by the (in)famous "Square Hole" meme. Users must drag and drop 3D shapes into their ~~in~~correct holes to pass the verification. Built with Lit, Three.js, and CSG (Constructive Solid Geometry).
 
+[shape-puzzle-captcha-recording.webm](https://github.com/user-attachments/assets/e080820c-f233-4ed0-bb11-eac4559fad55)
+
 [Demo Page](https://r3dacted42.github.io/shape-puzzle-captcha/)
 
 > [!WARNING]  
