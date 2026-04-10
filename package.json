@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "r3dacted42",
   "homepage": "https://r3dacted42.github.io/shape-puzzle-captcha/",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "main": "dist/shape-puzzle-captcha.cjs",
   "module": "dist/shape-puzzle-captcha.js",

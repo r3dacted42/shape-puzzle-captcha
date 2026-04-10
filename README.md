@@ -61,7 +61,7 @@ Alternatively, if you can't or don't want to use import maps, you can use the bu
 ```html
 <script
   type="module"
-  src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha@latest/dist/cdn/shape-puzzle-captcha.js"
+  src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha@latest/dist/bundle/shape-puzzle-captcha.js"
 ></script>
 ```
 
