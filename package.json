@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "r3dacted42",
   "homepage": "https://r3dacted42.github.io/shape-puzzle-captcha/",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "main": "dist/shape-puzzle-captcha.cjs",
   "module": "dist/shape-puzzle-captcha.js",
@@ -29,12 +29,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:bundle": "vite build --mode bundle",
     "build:demo": "vite build --mode demo",
     "preview": "vite preview"
   },
   "dependencies": {
-    "lit": "^3.3.1",
-    "three": "^0.183.0",
+    "lit": "^3.3.2",
+    "three": "^0.183.2",
     "three-bvh-csg": "^0.0.18"
   },
   "devDependencies": {

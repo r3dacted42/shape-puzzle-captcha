@@ -33,17 +33,18 @@ An interactive 3D Web Component captcha UI inspired by the (in)famous "Square Ho
   ```js
   import "@r3dacted42/shape-puzzle-captcha";
   ```
+Support for SSR depends on whether an integratio for Lit is available. If you're using Astro or something similar, consider using the CDN method below. 
 
 ### Using a CDN (Vanilla HTML)
 
-If you aren't using a bundler, you can use the component directly in the browser. Because modern ES modules are used, you must include an Import Map to resolve the dependencies.
+If you aren't using a bundler, you can use the component directly in the browser. Because modern ES modules are used, you must include an import map to resolve the dependencies.
 
 ```html
 <script type="importmap">
   {
     "imports": {
       "lit": "https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js",
-      "three": "https://unpkg.com/three@0.183.0/build/three.module.js",
+      "three": "https://unpkg.com/three@0.183.2/build/three.module.js",
       "three-bvh-csg": "https://unpkg.com/three-bvh-csg@0.0.18/build/index.module.js",
       "three-mesh-bvh": "https://unpkg.com/three-mesh-bvh@0.9.9/build/index.module.js"
     }
@@ -52,6 +53,15 @@ If you aren't using a bundler, you can use the component directly in the browser
 <script
   type="module"
   src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha@latest/dist/shape-puzzle-captcha.js"
+></script>
+```
+
+Alternatively, if you can't or don't want to use import maps, you can use the bundle version:
+
+```html
+<script
+  type="module"
+  src="https://unpkg.com/@r3dacted42/shape-puzzle-captcha@latest/dist/cdn/shape-puzzle-captcha.js"
 ></script>
 ```
 

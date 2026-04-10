@@ -3,14 +3,15 @@ import dts from "vite-plugin-dts";
 
 export default defineConfig(({ mode }) => {
   const isDemo = mode === "demo";
+  const isBundle = mode === "bundle";
 
   return {
     base: isDemo ? "/shape-puzzle-captcha/" : "/",
 
-    plugins: [!isDemo && dts({ insertTypesEntry: true })].filter(Boolean),
+    plugins: [!isDemo && !isBundle && dts({ insertTypesEntry: true })].filter(Boolean),
 
     build: {
-      outDir: isDemo ? "dist-demo" : "dist",
+      outDir: isDemo ? "dist-demo" : ( isBundle ? "dist/bundle" : "dist"),
       copyPublicDir: isDemo,
       lib: isDemo
         ? undefined
@@ -21,12 +22,12 @@ export default defineConfig(({ mode }) => {
               format === "es"
                 ? "shape-puzzle-captcha.js"
                 : "shape-puzzle-captcha.cjs",
-            formats: ["es", "umd"],
+            formats: isBundle ? ["es"] : ["es", "umd"],
           },
       rollupOptions: {
-        external: isDemo ? [] : ["lit", "three", "three-bvh-csg"],
+        external: (isDemo || isBundle) ? [] : ["lit", "three", "three-bvh-csg"],
         output: {
-          globals: (isDemo
+          globals: ((isDemo || isBundle)
             ? {}
             : {
                 lit: "Lit",
